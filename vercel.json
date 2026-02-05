@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "projects": [
+    {
+      "name": "tedytalk-manager-admin",
+      "rootDirectory": "tedytalk-manager",
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist"
+    },
+    {
+      "name": "tedytech-customer-app",
+      "rootDirectory": "tedytech-Customer-miniapp",
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist"
+    }
+  ]
+}
