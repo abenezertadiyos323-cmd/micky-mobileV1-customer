@@ -2,3 +2,7 @@
 .env
 .env.local
 .env.*.local
+
+# Ignore Windows reserved device filename and common folders
+nul
+node_modules/
