@@ -1,4 +1,5 @@
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from "lucide-react";
+import { List, ListItem, Block, Button } from "konsta/react";
 
 interface InventorySummaryCardProps {
   totalProducts: number;
@@ -10,30 +11,43 @@ interface InventorySummaryCardProps {
   onViewAll: () => void;
 }
 
-export function InventorySummaryCard({ totalProducts, byStatus, onViewAll }: InventorySummaryCardProps) {
+export function InventorySummaryCard({
+  totalProducts,
+  byStatus,
+  onViewAll,
+}: InventorySummaryCardProps) {
   return (
-    <div className="mx-4 p-4 bg-white rounded-lg border border-gray-200">
-      <h3 className="font-semibold text-base mb-3">Inventory</h3>
-      <div className="space-y-2 mb-4">
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Total Products</span>
-          <span className="font-medium">{totalProducts}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Active</span>
-          <span className="font-medium text-green-600">{byStatus.active}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Draft</span>
-          <span className="font-medium text-gray-500">{byStatus.draft}</span>
+    <Block className="mx-4">
+      <div className="p-4">
+        <h3 className="font-semibold text-base mb-3">Inventory</h3>
+        <List dividers>
+          <ListItem
+            title="Total Products"
+            after={<span className="font-medium">{totalProducts}</span>}
+          />
+          <ListItem
+            title="Active"
+            after={
+              <span className="font-medium text-green-600">
+                {byStatus.active}
+              </span>
+            }
+          />
+          <ListItem
+            title="Draft"
+            after={
+              <span className="font-medium text-gray-500">
+                {byStatus.draft}
+              </span>
+            }
+          />
+        </List>
+        <div className="mt-3">
+          <Button large onClick={onViewAll} className="w-full justify-center">
+            View Inventory <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
         </div>
       </div>
-      <button
-        onClick={onViewAll}
-        className="w-full px-4 py-2 text-center text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center justify-center gap-2"
-      >
-        View Inventory <ArrowRight className="h-4 w-4" />
-      </button>
-    </div>
+    </Block>
   );
 }
