@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { OrderTabs } from "@/components/orders/OrderTabs";
 import { OrderList } from "@/components/orders/OrderList";
 import { OrderCard } from "@/components/orders/OrderCard";
@@ -10,8 +10,19 @@ import type { ExchangeRequest } from "@/types/order";
 
 export function OrdersTab() {
   const { data: phoneActions, isLoading: actionsLoading } = usePhoneActions();
-  const { data: exchanges, isLoading: exchangesLoading } = useExchangeRequests();
+  const {
+    data: exchanges,
+    isLoading: exchangesLoading,
+    isMockData: exchangesUsingMockData,
+  } = useExchangeRequests();
   const [selectedExchange, setSelectedExchange] = useState<ExchangeRequest | null>(null);
+  const canMutateExchanges = !exchangesLoading && !exchangesUsingMockData;
+
+  useEffect(() => {
+    if (!canMutateExchanges) {
+      setSelectedExchange(null);
+    }
+  }, [canMutateExchanges]);
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -34,7 +45,10 @@ export function OrdersTab() {
           <OrderList
             items={exchanges}
             renderItem={(exchange) => (
-              <ExchangeCard exchange={exchange} onClick={() => setSelectedExchange(exchange)} />
+              <ExchangeCard
+                exchange={exchange}
+                onClick={canMutateExchanges ? () => setSelectedExchange(exchange) : undefined}
+              />
             )}
             isLoading={exchangesLoading}
             emptyMessage="No exchange requests yet"
@@ -44,10 +58,7 @@ export function OrdersTab() {
       />
 
       {/* Exchange Detail Sheet */}
-      <ExchangeDetailSheet
-        exchange={selectedExchange}
-        onClose={() => setSelectedExchange(null)}
-      />
+      <ExchangeDetailSheet exchange={selectedExchange} onClose={() => setSelectedExchange(null)} />
     </div>
   );
 }

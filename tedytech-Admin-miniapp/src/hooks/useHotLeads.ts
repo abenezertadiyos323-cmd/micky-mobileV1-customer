@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
+import { api } from 'convex_generated/api';
 import { HotLead } from '@/types/hotLead';
 import { formatWaitTime, getLeadPriorityIcon } from '@/lib/utils';
 

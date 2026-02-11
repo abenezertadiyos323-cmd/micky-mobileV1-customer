@@ -8,6 +8,7 @@ import { mockExchangeRequests } from "@/data/mockData";
  */
 export function useExchangeRequests() {
   const convexExchanges = useQuery(api.phoneActions.listAllExchangeRequests);
+  const isMockData = convexExchanges === undefined;
 
   // Fallback to mock data if Convex data is unavailable
   const exchanges = (convexExchanges ?? mockExchangeRequests) as ExchangeRequest[];
@@ -15,6 +16,7 @@ export function useExchangeRequests() {
   return {
     data: exchanges,
     isLoading: convexExchanges === undefined,
+    isMockData,
     error: null,
   };
 }
@@ -26,7 +28,7 @@ export function useFilteredExchangeRequests(filters: {
   status?: OrderStatus;
   search?: string;
 }) {
-  const { data: allExchanges, isLoading } = useExchangeRequests();
+  const { data: allExchanges, isLoading, isMockData } = useExchangeRequests();
 
   let filtered = [...allExchanges];
 
@@ -51,6 +53,7 @@ export function useFilteredExchangeRequests(filters: {
   return {
     data: filtered,
     isLoading,
+    isMockData,
     error: null,
   };
 }

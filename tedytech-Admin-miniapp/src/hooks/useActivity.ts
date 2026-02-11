@@ -3,6 +3,19 @@ import { api } from "convex_generated/api";
 import type { Activity } from "@/types/admin";
 import { mockActivities } from "@/data/mockData";
 
+function getActionDescription(actionType: string) {
+  switch (actionType) {
+    case "reserve":
+      return "Reservation";
+    case "ask":
+      return "Question";
+    case "view":
+      return "View";
+    default:
+      return "Action";
+  }
+}
+
 /**
  * Fetch recent activities — aggregates phone actions, exchanges, and searches from Convex
  */
@@ -27,7 +40,7 @@ export function useRecentActivity(limit: number = 20) {
     ...(convexActions ?? []).map((a: any) => ({
       id: a._id,
       type: "phone_action" as const,
-      description: `${a.actionType === "reserve" ? "Reservation" : "Question"} for ${a.phoneName || "a phone"}`,
+      description: `${getActionDescription(a.actionType)} for ${a.phoneName || "a phone"}`,
       timestamp: a.createdAt,
       sessionId: a.sessionId,
       metadata: { actionType: a.actionType, phoneName: a.phoneName },
