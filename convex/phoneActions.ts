@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { requireAdmin } from "./lib/auth/adminAuth";
 
 export const createPhoneActionRequest = mutation({
   args: {
@@ -57,7 +58,11 @@ export const getExchangeRequestsV2 = query({
 
 // Admin: list all phone actions with product name/price joined
 export const listAllPhoneActions = query({
-  handler: async (ctx) => {
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    // Require admin session
+    await requireAdmin(ctx, args.token);
+
     const actions = await ctx.db.query("phoneActions").order("desc").collect();
     const enriched = await Promise.all(
       actions.map(async (a) => {
@@ -73,7 +78,7 @@ export const listAllPhoneActions = query({
           // phoneId may not be a valid product ID
         }
         return { ...a, phoneName, phonePrice };
-      })
+      }),
     );
     return enriched;
   },
@@ -81,8 +86,15 @@ export const listAllPhoneActions = query({
 
 // Admin: list all exchange requests with desired phone name/price joined
 export const listAllExchangeRequests = query({
-  handler: async (ctx) => {
-    const requests = await ctx.db.query("exchangeRequests").order("desc").collect();
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    // Require admin session
+    await requireAdmin(ctx, args.token);
+
+    const requests = await ctx.db
+      .query("exchangeRequests")
+      .order("desc")
+      .collect();
     const enriched = await Promise.all(
       requests.map(async (r) => {
         let desiredPhoneName: string | null = null;
@@ -97,7 +109,7 @@ export const listAllExchangeRequests = query({
           // desiredPhoneId may not be a valid product ID
         }
         return { ...r, desiredPhoneName, desiredPhonePrice };
-      })
+      }),
     );
     return enriched;
   },
@@ -115,11 +127,25 @@ export const updateExchangeStatus = mutation({
 });
 
 export const getExchangeDetailV2 = query({
-  args: { requestId: v.id("exchangeRequests"), sessionId: v.string() },
+  args: {
+    requestId: v.id("exchangeRequests"),
+    sessionId: v.optional(v.string()),
+    token: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
+    // If token provided, require admin session
+    if (args.token) {
+      await requireAdmin(ctx, args.token);
+    }
+
     const doc = await ctx.db.get("exchangeRequests", args.requestId);
     if (!doc) return {};
-    if (doc.sessionId !== args.sessionId) return {};
+
+    // If sessionId provided, ensure ownership
+    if (args.sessionId) {
+      if (doc.sessionId !== args.sessionId) return {};
+    }
+
     return {
       request: doc,
       images: [],
