@@ -81,6 +81,15 @@ export const logSearch = mutation({
   },
 });
 
+// Admin: list recent searches
+export const listRecentSearches = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 50;
+    return await ctx.db.query("searches").order("desc").take(limit);
+  },
+});
+
 export const searchProducts = query({
   args: {
     term: v.optional(v.string()),

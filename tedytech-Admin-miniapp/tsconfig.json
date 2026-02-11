@@ -7,10 +7,16 @@
     "moduleResolution": "Node",
     "jsx": "react-jsx",
     "strict": true,
+    "noEmit": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "convex_generated/*": ["../convex/_generated/*"]
+    },
+    "types": ["vite/client"]
   },
   "include": ["src"]
 }

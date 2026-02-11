@@ -10,8 +10,9 @@ export default defineConfig(({ mode }) => {
       host: "::",
       port: 5174,
       fs: {
-        // Allow only the generated convex client and local node_modules
+        // Allow convex generated, node_modules, and this project directory
         allow: [
+          path.resolve(__dirname),
           path.resolve(__dirname, "../convex/_generated"),
           path.resolve(__dirname, "node_modules"),
         ],

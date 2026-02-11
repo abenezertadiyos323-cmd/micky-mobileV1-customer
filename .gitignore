@@ -3,10 +3,14 @@
 .env.local
 .env.*.local
 
+# Local Claude configuration (use global ~/.claude/ instead)
+.claude/mcp.json
+
 # Ignore Windows reserved device filename and common folders
 nul
 node_modules/
 
-# Ignore generated build outputs for the customer app
+# Ignore generated build outputs
 customer-app/dist/
 tedytech-Customer-miniapp/customer-app/dist/
+tedytech-Admin-miniapp/dist/

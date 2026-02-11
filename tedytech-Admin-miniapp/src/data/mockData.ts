@@ -1,0 +1,257 @@
+import type { Product } from "@/types/product";
+import type { PhoneAction, ExchangeRequest } from "@/types/order";
+import type { Activity } from "@/types/admin";
+
+/**
+ * Mock products for development
+ */
+export const mockProducts: Product[] = [
+  {
+    _id: "1",
+    _creationTime: Date.now() - 86400000,
+    name: "iPhone 15 Pro Max",
+    description: "Latest flagship with A17 Pro chip, titanium design, and 48MP camera",
+    price: 95000,
+    currency: "ETB",
+    images: ["https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400"],
+    category: "Smartphones",
+    tags: ["Apple", "Premium", "5G"],
+    status: "active",
+    isFeatured: true,
+    isNewArrival: true,
+    isPopular: true,
+    createdAt: Date.now() - 86400000,
+    updatedAt: Date.now() - 3600000,
+  },
+  {
+    _id: "2",
+    _creationTime: Date.now() - 172800000,
+    name: "Samsung Galaxy S24 Ultra",
+    description: "Premium Android flagship with S Pen, 200MP camera",
+    price: 82000,
+    currency: "ETB",
+    images: ["https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400"],
+    category: "Smartphones",
+    tags: ["Samsung", "Premium", "5G"],
+    status: "active",
+    isFeatured: true,
+    isNewArrival: false,
+    isPopular: true,
+    createdAt: Date.now() - 172800000,
+  },
+  {
+    _id: "3",
+    _creationTime: Date.now() - 259200000,
+    name: "iPhone 14 Pro",
+    description: "Previous gen flagship with excellent value",
+    price: 68000,
+    currency: "ETB",
+    images: ["https://images.unsplash.com/photo-1663499482523-1c0c1bae4ce1?w=400"],
+    category: "Smartphones",
+    tags: ["Apple", "Mid-range"],
+    status: "active",
+    isFeatured: false,
+    isNewArrival: false,
+    isPopular: true,
+    createdAt: Date.now() - 259200000,
+  },
+  {
+    _id: "4",
+    _creationTime: Date.now() - 345600000,
+    name: "Xiaomi 14 Pro",
+    description: "Flagship specs at competitive price",
+    price: 45000,
+    currency: "ETB",
+    images: ["https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400"],
+    category: "Smartphones",
+    tags: ["Xiaomi", "Value"],
+    status: "active",
+    isFeatured: false,
+    isNewArrival: false,
+    isPopular: false,
+    createdAt: Date.now() - 345600000,
+  },
+  {
+    _id: "5",
+    _creationTime: Date.now() - 432000000,
+    name: "Google Pixel 8 Pro",
+    description: "Best Android camera, clean software experience",
+    price: 58000,
+    currency: "ETB",
+    images: ["https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400"],
+    category: "Smartphones",
+    tags: ["Google", "Premium"],
+    status: "draft",
+    isFeatured: false,
+    isNewArrival: false,
+    isPopular: false,
+    createdAt: Date.now() - 432000000,
+  },
+];
+
+/**
+ * Mock phone actions for development
+ */
+export const mockPhoneActions: PhoneAction[] = [
+  {
+    _id: "action1",
+    _creationTime: Date.now() - 3600000,
+    sessionId: "session123",
+    phoneId: "1",
+    actionType: "reserve",
+    createdAt: Date.now() - 3600000,
+    phoneName: "iPhone 15 Pro Max",
+    phonePrice: 95000,
+  },
+  {
+    _id: "action2",
+    _creationTime: Date.now() - 7200000,
+    sessionId: "session456",
+    phoneId: "2",
+    actionType: "ask",
+    createdAt: Date.now() - 7200000,
+    phoneName: "Samsung Galaxy S24 Ultra",
+    phonePrice: 82000,
+  },
+  {
+    _id: "action3",
+    _creationTime: Date.now() - 10800000,
+    sessionId: "session789",
+    phoneId: "3",
+    actionType: "reserve",
+    createdAt: Date.now() - 10800000,
+    phoneName: "iPhone 14 Pro",
+    phonePrice: 68000,
+  },
+  {
+    _id: "action4",
+    _creationTime: Date.now() - 14400000,
+    sessionId: "session101",
+    phoneId: "1",
+    actionType: "ask",
+    createdAt: Date.now() - 14400000,
+    phoneName: "iPhone 15 Pro Max",
+    phonePrice: 95000,
+  },
+];
+
+/**
+ * Mock exchange requests for development
+ */
+export const mockExchangeRequests: ExchangeRequest[] = [
+  {
+    _id: "exchange1",
+    _creationTime: Date.now() - 1800000,
+    sessionId: "session456",
+    desiredPhoneId: "1",
+    offeredModel: "iPhone 13 Pro",
+    offeredStorageGb: 256,
+    offeredCondition: "Excellent",
+    offeredNotes: "No scratches, battery health 95%, original box included",
+    status: "new",
+    createdAt: Date.now() - 1800000,
+    desiredPhoneName: "iPhone 15 Pro Max",
+    desiredPhonePrice: 95000,
+  },
+  {
+    _id: "exchange2",
+    _creationTime: Date.now() - 5400000,
+    sessionId: "session789",
+    desiredPhoneId: "2",
+    offeredModel: "Samsung S22 Ultra",
+    offeredStorageGb: 512,
+    offeredCondition: "Good",
+    offeredNotes: "Minor scratches on back, fully functional",
+    status: "pending",
+    createdAt: Date.now() - 5400000,
+    desiredPhoneName: "Samsung Galaxy S24 Ultra",
+    desiredPhonePrice: 82000,
+  },
+  {
+    _id: "exchange3",
+    _creationTime: Date.now() - 9000000,
+    sessionId: "session101",
+    desiredPhoneId: "3",
+    offeredModel: "iPhone 12",
+    offeredStorageGb: 128,
+    offeredCondition: "Fair",
+    offeredNotes: "Screen has minor crack, everything works",
+    status: "completed",
+    createdAt: Date.now() - 9000000,
+    desiredPhoneName: "iPhone 14 Pro",
+    desiredPhonePrice: 68000,
+  },
+  {
+    _id: "exchange4",
+    _creationTime: Date.now() - 12600000,
+    sessionId: "session202",
+    desiredPhoneId: "1",
+    offeredModel: "Xiaomi Mi 11",
+    offeredStorageGb: 256,
+    offeredCondition: "Excellent",
+    offeredNotes: "Like new, used for 6 months only",
+    status: "rejected",
+    createdAt: Date.now() - 12600000,
+    desiredPhoneName: "iPhone 15 Pro Max",
+    desiredPhonePrice: 95000,
+  },
+];
+
+/**
+ * Mock activities for development
+ */
+export const mockActivities: Activity[] = [
+  {
+    id: "activity1",
+    type: "exchange_request",
+    description: "New exchange request for iPhone 15 Pro Max",
+    timestamp: Date.now() - 1800000,
+    sessionId: "session456",
+    metadata: {
+      offeredModel: "iPhone 13 Pro",
+      desiredPhoneName: "iPhone 15 Pro Max",
+    },
+  },
+  {
+    id: "activity2",
+    type: "phone_action",
+    description: "Reserve request for iPhone 15 Pro Max",
+    timestamp: Date.now() - 3600000,
+    sessionId: "session123",
+    metadata: {
+      actionType: "reserve",
+      phoneName: "iPhone 15 Pro Max",
+    },
+  },
+  {
+    id: "activity3",
+    type: "search",
+    description: 'User searched for "iPhone 15"',
+    timestamp: Date.now() - 5400000,
+    metadata: {
+      searchTerm: "iPhone 15",
+    },
+  },
+  {
+    id: "activity4",
+    type: "phone_action",
+    description: "Question about Samsung Galaxy S24 Ultra",
+    timestamp: Date.now() - 7200000,
+    sessionId: "session456",
+    metadata: {
+      actionType: "ask",
+      phoneName: "Samsung Galaxy S24 Ultra",
+    },
+  },
+  {
+    id: "activity5",
+    type: "exchange_request",
+    description: "Exchange request updated to pending",
+    timestamp: Date.now() - 9000000,
+    sessionId: "session789",
+    metadata: {
+      offeredModel: "Samsung S22 Ultra",
+      status: "pending",
+    },
+  },
+];

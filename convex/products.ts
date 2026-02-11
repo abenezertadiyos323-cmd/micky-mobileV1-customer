@@ -1,8 +1,8 @@
-import { query } from "convex/server";
+import { query } from "./_generated/server";
 
 // Return all products from the Convex `products` table.
-export const listAllProducts = query(async ({ db }) => {
-  // Return all rows from the products table. Adjust projections/indexes as needed.
-  const rows = await db.table("products").collect();
-  return rows;
+export const listAllProducts = query({
+  handler: async (ctx) => {
+    return await ctx.db.query("products").collect();
+  },
 });

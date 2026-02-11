@@ -6,15 +6,24 @@
 // Update this file by running `convex dev` in a real development workflow.
 export const api: any = {
   products: {
-    // Points to the server query defined in `convex/products.ts`
-    listAllProducts: {
-      // marker so the client-side code can pass this into `useQuery`
-      name: "products.listAllProducts",
-    },
+    listAllProducts: { name: "products:listAllProducts" },
   },
   favorites: {},
-  search: {},
+  search: {
+    getSearchPanelData: { name: "search:getSearchPanelData" },
+    logSearch: { name: "search:logSearch" },
+    listRecentSearches: { name: "search:listRecentSearches" },
+    searchProducts: { name: "search:searchProducts" },
+  },
   sessions: {},
-  phoneActions: {},
+  phoneActions: {
+    createPhoneActionRequest: { name: "phoneActions:createPhoneActionRequest" },
+    createExchangeRequestMiniapp: { name: "phoneActions:createExchangeRequestMiniapp" },
+    listAllPhoneActions: { name: "phoneActions:listAllPhoneActions" },
+    listAllExchangeRequests: { name: "phoneActions:listAllExchangeRequests" },
+    updateExchangeStatus: { name: "phoneActions:updateExchangeStatus" },
+    getExchangeRequestsV2: { name: "phoneActions:getExchangeRequestsV2" },
+    getExchangeDetailV2: { name: "phoneActions:getExchangeDetailV2" },
+  },
   affiliates: {},
 };
