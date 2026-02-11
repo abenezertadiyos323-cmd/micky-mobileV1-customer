@@ -1,9 +1,6 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
-import {
-  generateToken,
-  getSessionExpiration,
-} from "../lib/auth/adminAuth";
+import { generateToken, getSessionExpiration } from "../lib/auth/adminAuth";
 
 /**
  * Seller mutations for custom Convex-based authentication and session management
@@ -30,16 +27,40 @@ export const authenticateWithTelegram = mutation({
       .withIndex("by_telegramId", (q) => q.eq("telegramId", args.telegramId))
       .first();
 
-    if (!seller) {
-      throw new Error("Seller not found. Contact administrator to create admin account.");
+    let resolvedSeller = seller;
+    if (!resolvedSeller) {
+      // Allow bootstrap via environment variable ADMIN_CHAT_ID for a single admin
+      const ADMIN_CHAT_ID =
+        process.env.ADMIN_CHAT_ID || process.env.VITE_ADMIN_CHAT_ID;
+      if (ADMIN_CHAT_ID && ADMIN_CHAT_ID === args.telegramId) {
+        // Create a lightweight admin seller record
+        const now = Date.now();
+        const newSellerId = await ctx.db.insert("sellers", {
+          telegramId: args.telegramId,
+          username: args.username,
+          firstName: args.firstName,
+          lastName: args.lastName,
+          businessName: "Admin",
+          businessType: "admin",
+          isActive: true,
+          role: "admin",
+          createdAt: now,
+          updatedAt: now,
+        });
+        resolvedSeller = await ctx.db.get(newSellerId);
+      } else {
+        throw new Error(
+          "Seller not found. Contact administrator to create admin account.",
+        );
+      }
     }
 
-    if (!seller.isActive) {
+    if (!resolvedSeller.isActive) {
       throw new Error("Seller account is inactive");
     }
 
     // Update seller profile with latest Telegram info
-    await ctx.db.patch(seller._id, {
+    await ctx.db.patch(resolvedSeller._id, {
       username: args.username,
       firstName: args.firstName,
       lastName: args.lastName,
@@ -52,7 +73,7 @@ export const authenticateWithTelegram = mutation({
 
     // Create session
     const sessionId = await ctx.db.insert("admin_sessions", {
-      sellerId: seller._id,
+      sellerId: resolvedSeller._id,
       token,
       expiresAt,
       createdAt: Date.now(),

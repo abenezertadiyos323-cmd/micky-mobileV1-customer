@@ -1,5 +1,6 @@
 import { useQuery } from "convex/react";
 import { api } from "convex_generated/api";
+import { useAdmin } from "@/contexts/AdminContext";
 import type { ExchangeRequest, OrderStatus } from "@/types/order";
 import { mockExchangeRequests } from "@/data/mockData";
 
@@ -7,11 +8,16 @@ import { mockExchangeRequests } from "@/data/mockData";
  * Fetch all exchange requests
  */
 export function useExchangeRequests() {
-  const convexExchanges = useQuery(api.phoneActions.listAllExchangeRequests);
+  const { adminToken } = useAdmin();
+  const convexExchanges = useQuery(
+    api.phoneActions.listAllExchangeRequests,
+    adminToken ?? "",
+  );
   const isMockData = convexExchanges === undefined;
 
   // Fallback to mock data if Convex data is unavailable
-  const exchanges = (convexExchanges ?? mockExchangeRequests) as ExchangeRequest[];
+  const exchanges = (convexExchanges ??
+    mockExchangeRequests) as ExchangeRequest[];
 
   return {
     data: exchanges,
@@ -43,7 +49,7 @@ export function useFilteredExchangeRequests(filters: {
     filtered = filtered.filter(
       (e) =>
         e.desiredPhoneName?.toLowerCase().includes(searchLower) ||
-        e.offeredModel.toLowerCase().includes(searchLower)
+        e.offeredModel.toLowerCase().includes(searchLower),
     );
   }
 
@@ -72,9 +78,11 @@ export function useExchangeStats() {
     totalExchanges: exchanges.length,
     newExchanges: exchanges.filter((e) => e.status === "new").length,
     pendingExchanges: exchanges.filter((e) => e.status === "pending").length,
-    completedExchanges: exchanges.filter((e) => e.status === "completed").length,
+    completedExchanges: exchanges.filter((e) => e.status === "completed")
+      .length,
     rejectedExchanges: exchanges.filter((e) => e.status === "rejected").length,
-    todayExchanges: exchanges.filter((e) => e.createdAt >= todayTimestamp).length,
+    todayExchanges: exchanges.filter((e) => e.createdAt >= todayTimestamp)
+      .length,
   };
 
   return {

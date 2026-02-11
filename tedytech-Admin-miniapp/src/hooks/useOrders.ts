@@ -1,5 +1,6 @@
 import { useQuery } from "convex/react";
 import { api } from "convex_generated/api";
+import { useAdmin } from "@/contexts/AdminContext";
 import type { PhoneAction } from "@/types/order";
 import { mockPhoneActions } from "@/data/mockData";
 
@@ -7,7 +8,11 @@ import { mockPhoneActions } from "@/data/mockData";
  * Fetch all phone actions
  */
 export function usePhoneActions() {
-  const convexActions = useQuery(api.phoneActions.listAllPhoneActions);
+  const { adminToken } = useAdmin();
+  const convexActions = useQuery(
+    api.phoneActions.listAllPhoneActions,
+    adminToken ?? "",
+  );
 
   // Fallback to mock data if Convex data is unavailable
   const actions = (convexActions ?? mockPhoneActions) as PhoneAction[];
@@ -39,7 +44,7 @@ export function useFilteredPhoneActions(filters: {
   if (filters.search) {
     const searchLower = filters.search.toLowerCase();
     filtered = filtered.filter((a) =>
-      a.phoneName?.toLowerCase().includes(searchLower)
+      a.phoneName?.toLowerCase().includes(searchLower),
     );
   }
 

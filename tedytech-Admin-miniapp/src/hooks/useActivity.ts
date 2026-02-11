@@ -1,5 +1,6 @@
 import { useQuery } from "convex/react";
 import { api } from "convex_generated/api";
+import { useAdmin } from "@/contexts/AdminContext";
 import type { Activity } from "@/types/admin";
 import { mockActivities } from "@/data/mockData";
 
@@ -20,8 +21,15 @@ function getActionDescription(actionType: string) {
  * Fetch recent activities — aggregates phone actions, exchanges, and searches from Convex
  */
 export function useRecentActivity(limit: number = 20) {
-  const convexActions = useQuery(api.phoneActions.listAllPhoneActions);
-  const convexExchanges = useQuery(api.phoneActions.listAllExchangeRequests);
+  const { adminToken } = useAdmin();
+  const convexActions = useQuery(
+    api.phoneActions.listAllPhoneActions,
+    adminToken ?? "",
+  );
+  const convexExchanges = useQuery(
+    api.phoneActions.listAllExchangeRequests,
+    adminToken ?? "",
+  );
   const convexSearches = useQuery(api.search.listRecentSearches, { limit: 50 });
 
   const isLoading =
@@ -31,7 +39,9 @@ export function useRecentActivity(limit: number = 20) {
 
   // If any query is still loading and we have no data yet, use mock data
   if (isLoading) {
-    const sorted = [...mockActivities].sort((a, b) => b.timestamp - a.timestamp);
+    const sorted = [...mockActivities].sort(
+      (a, b) => b.timestamp - a.timestamp,
+    );
     return { data: sorted.slice(0, limit), isLoading: true, error: null };
   }
 
@@ -75,7 +85,9 @@ export function useFilteredActivity(filters: {
   type?: "search" | "phone_action" | "exchange_request";
   limit?: number;
 }) {
-  const { data: allActivities, isLoading } = useRecentActivity(filters.limit ?? 50);
+  const { data: allActivities, isLoading } = useRecentActivity(
+    filters.limit ?? 50,
+  );
 
   let filtered = [...allActivities];
 
@@ -104,9 +116,13 @@ export function useActivityStats() {
   const stats = {
     totalActivities: activities.length,
     searchActivities: activities.filter((a) => a.type === "search").length,
-    phoneActionActivities: activities.filter((a) => a.type === "phone_action").length,
-    exchangeRequestActivities: activities.filter((a) => a.type === "exchange_request").length,
-    todayActivities: activities.filter((a) => a.timestamp >= todayTimestamp).length,
+    phoneActionActivities: activities.filter((a) => a.type === "phone_action")
+      .length,
+    exchangeRequestActivities: activities.filter(
+      (a) => a.type === "exchange_request",
+    ).length,
+    todayActivities: activities.filter((a) => a.timestamp >= todayTimestamp)
+      .length,
   };
 
   return {
