@@ -5,7 +5,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { useConvex, useMutation } from "convex/react";
+import { useConvex } from "convex/react";
 import { api } from "convex_generated/api";
 import type { TabType, Filters } from "@/types/admin";
 import { processQueue } from "@/lib/offlineQueue";
@@ -170,7 +170,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     if (storedSessionId) {
       setSessionId(storedSessionId);
     } else {
-      const newSessionId = `admin_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const newSessionId = `admin_${Date.now()}_${Math.random()
+        .toString(36)
+        .substring(7)}`;
       localStorage.setItem("tedytech_admin_session_id", newSessionId);
       setSessionId(newSessionId);
     }
@@ -199,15 +201,12 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setOrdersFilters({});
   };
 
-  // Try to authenticate with Convex when Telegram is ready
-  const authenticate = useMutation(
-    api.mutations.sellers.authenticateWithTelegram,
-  );
+  // Try to authenticate with Convex when Telegram is ready.
   useEffect(() => {
     const tryAuth = async () => {
       if (!isWebAppReady) return;
       if (!telegramUserId) return;
-      if (adminToken) return; // already authenticated
+      if (adminToken) return; // already authenticated.
 
       const ALLOWED = import.meta.env.VITE_ADMIN_CHAT_ID || "";
       if (ALLOWED && String(telegramUserId) !== String(ALLOWED)) {
@@ -216,7 +215,22 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const resp = await authenticate({
+        const authenticateRef = (api as any)?.mutations?.sellers
+          ?.authenticateWithTelegram;
+
+        if (!authenticateRef) {
+          console.error(
+            "[AdminContext] Missing Convex function reference: api.mutations.sellers.authenticateWithTelegram",
+          );
+          setWebAppError((prev) =>
+            prev ??
+            "Configuration error: admin authentication mutation is unavailable. Regenerate Convex API and deploy sellers mutation.",
+          );
+          setIsAuthorized(false);
+          return;
+        }
+
+        const resp = await convex.mutation(authenticateRef, {
           telegramId: String(telegramUserId),
           username: (window.Telegram?.WebApp as any)?.initDataUnsafe?.user
             ?.username,
@@ -226,21 +240,26 @@ export function AdminProvider({ children }: { children: ReactNode }) {
             ?.last_name,
         });
 
-        if (resp && resp.token) {
-          setAdminToken(resp.token);
-          localStorage.setItem("tedytech_admin_token", resp.token);
+        if (resp && (resp as any).token) {
+          const token = (resp as any).token as string;
+          setAdminToken(token);
+          localStorage.setItem("tedytech_admin_token", token);
           setIsAuthorized(true);
         } else {
           setIsAuthorized(false);
         }
       } catch (err) {
         console.error("[AdminContext] authentication failed", err);
+        setWebAppError((prev) =>
+          prev ??
+          "Authentication failed during startup. Check Convex deployment and Telegram init data.",
+        );
         setIsAuthorized(false);
       }
     };
 
     tryAuth();
-  }, [isWebAppReady, telegramUserId, adminToken, authenticate]);
+  }, [isWebAppReady, telegramUserId, adminToken, convex]);
 
   const value: AdminContextType = {
     activeTab,

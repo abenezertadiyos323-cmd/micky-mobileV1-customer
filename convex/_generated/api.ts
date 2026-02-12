@@ -26,4 +26,29 @@ export const api: any = {
     getExchangeDetailV2: { name: "phoneActions:getExchangeDetailV2" },
   },
   affiliates: {},
+  mutations: {
+    sellers: {
+      authenticateWithTelegram: {
+        name: "mutations/sellers:authenticateWithTelegram",
+      },
+      createSession: { name: "mutations/sellers:createSession" },
+      revokeSession: { name: "mutations/sellers:revokeSession" },
+      createSeller: { name: "mutations/sellers:createSeller" },
+    },
+    products: {
+      createProduct: { name: "mutations/products:createProduct" },
+      updateProduct: { name: "mutations/products:updateProduct" },
+      updateProductStatus: {
+        name: "mutations/products:updateProductStatus",
+      },
+      deleteProduct: { name: "mutations/products:deleteProduct" },
+      updateProductStock: { name: "mutations/products:updateProductStock" },
+    },
+    categories: {
+      createCategory: { name: "mutations/categories:createCategory" },
+      updateCategory: { name: "mutations/categories:updateCategory" },
+      deleteCategory: { name: "mutations/categories:deleteCategory" },
+      reorderCategories: { name: "mutations/categories:reorderCategories" },
+    },
+  },
 };

@@ -7,6 +7,8 @@ import { KonstaProvider } from "konsta/react";
 import App from "./App";
 import "./index.css";
 
+console.log("DEBUG: Convex URL is", import.meta.env.VITE_CONVEX_URL);
+
 const rootElement = document.getElementById("root");
 
 if (!rootElement) {
