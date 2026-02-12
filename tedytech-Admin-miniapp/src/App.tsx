@@ -74,14 +74,24 @@ export default function App() {
     );
   }
 
-  // If authorization explicitly failed, show Unauthorized screen
+  // If authorization explicitly failed, show detailed Unauthorized screen
   if (isAuthorized === false) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="text-center p-6 rounded-lg shadow bg-card">
-          <h2 className="text-lg font-semibold mb-2">Unauthorized Access</h2>
+      <div className="flex items-center justify-center min-h-screen bg-background p-6">
+        <div className="max-w-md w-full text-center p-6 rounded-xl border border-destructive/30 bg-card shadow-sm space-y-4">
+          <h2 className="text-lg font-semibold text-destructive">
+            Unauthorized Access
+          </h2>
           <p className="text-sm text-muted-foreground">
-            You do not have permission to view this page.
+            You do not have permission to view this admin panel.
+          </p>
+          {webAppError && (
+            <p className="text-xs text-muted-foreground bg-muted/40 p-3 rounded-lg">
+              {webAppError}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Your Telegram ID: {telegramUserId || "Unknown"}
           </p>
         </div>
       </div>

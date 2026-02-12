@@ -230,22 +230,38 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   // Initialize session (can be enhanced with Convex session creation later).
   useEffect(() => {
+    console.log("[AdminContext] Initializing session");
+
     try {
       const storedSessionId = localStorage.getItem("tedytech_admin_session_id");
       if (storedSessionId) {
+        console.log("[AdminContext] Found existing session:", storedSessionId);
         setSessionId(storedSessionId);
       } else {
         const newSessionId = `admin_${Date.now()}_${Math.random()
           .toString(36)
           .substring(7)}`;
+        console.log("[AdminContext] Creating new session:", newSessionId);
         localStorage.setItem("tedytech_admin_session_id", newSessionId);
         setSessionId(newSessionId);
       }
     } catch (error) {
-      console.error("[AdminContext] localStorage is unavailable", error);
+      console.error("[AdminContext] localStorage unavailable:", error);
+
+      // Still set a session ID in memory even if localStorage fails
+      const fallbackSessionId = `admin_${Date.now()}_${Math.random()
+        .toString(36)
+        .substring(7)}`;
+      console.log(
+        "[AdminContext] Using fallback session (memory only):",
+        fallbackSessionId,
+      );
+      setSessionId(fallbackSessionId);
+
       setWebAppError(
         (prev) =>
-          prev ?? "Local storage is unavailable. Session cannot be persisted.",
+          prev ??
+          "Local storage is unavailable. Session will not persist after refresh.",
       );
     }
   }, []);
@@ -275,29 +291,77 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   // Try to authenticate with Convex when Telegram is ready.
   useEffect(() => {
-    const tryAuth = async () => {
-      if (!isWebAppReady) return;
-      if (!telegramUserId) return;
-      if (adminToken) return; // already authenticated.
+    const tryAuth = async (attempt = 1) => {
+      const MAX_AUTH_RETRIES = 3;
 
-      const allowed = import.meta.env.VITE_ADMIN_CHAT_ID || "";
-      if (allowed && String(telegramUserId) !== String(allowed)) {
+      console.log(
+        `[AdminContext] Auth attempt ${attempt}/${MAX_AUTH_RETRIES}`,
+        {
+          isWebAppReady,
+          telegramUserId,
+          adminToken,
+        },
+      );
+
+      if (!isWebAppReady) {
+        console.log("[AdminContext] Skipping auth: WebApp not ready");
+        return;
+      }
+
+      if (!telegramUserId) {
+        console.log("[AdminContext] Skipping auth: No Telegram user ID");
+        return;
+      }
+
+      if (adminToken) {
+        console.log("[AdminContext] Skipping auth: Already authenticated");
+        return;
+      }
+
+      // Validate environment variable
+      const allowed = import.meta.env.VITE_ADMIN_CHAT_ID;
+      console.log("[AdminContext] Environment check:", {
+        VITE_ADMIN_CHAT_ID: allowed,
+        telegramUserId,
+        matches: allowed && String(telegramUserId) === String(allowed),
+      });
+
+      if (!allowed) {
+        console.error(
+          "[AdminContext] VITE_ADMIN_CHAT_ID is not configured",
+        );
+        setWebAppError(
+          (prev) =>
+            prev ??
+            "Admin access is not configured. Set VITE_ADMIN_CHAT_ID in environment variables.",
+        );
+        setIsAuthorized(false);
+        return;
+      }
+
+      if (String(telegramUserId) !== String(allowed)) {
+        console.error("[AdminContext] Unauthorized user:", {
+          telegramUserId,
+          allowed,
+        });
         setIsAuthorized(false);
         return;
       }
 
       try {
+        console.log("[AdminContext] Starting authentication mutation");
+
         const authenticateRef = (api as any)?.mutations?.sellers
           ?.authenticateWithTelegram;
 
         if (!authenticateRef) {
           console.error(
-            "[AdminContext] Missing Convex function reference: api.mutations.sellers.authenticateWithTelegram",
+            "[AdminContext] Missing Convex mutation: api.mutations.sellers.authenticateWithTelegram",
           );
           setWebAppError(
             (prev) =>
               prev ??
-              "Configuration error: admin authentication mutation is unavailable. Regenerate Convex API and deploy sellers mutation.",
+              "Authentication service unavailable. Regenerate Convex API with: npx convex dev",
           );
           setIsAuthorized(false);
           return;
@@ -306,6 +370,13 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         const tg = getTelegramWebApp();
         const user = (tg as any)?.initDataUnsafe?.user;
 
+        console.log("[AdminContext] Calling authentication mutation with:", {
+          telegramId: String(telegramUserId),
+          username: user?.username,
+          firstName: user?.first_name,
+          lastName: user?.last_name,
+        });
+
         const resp = await convex.mutation(authenticateRef, {
           telegramId: String(telegramUserId),
           username: user?.username,
@@ -313,22 +384,57 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           lastName: user?.last_name,
         });
 
+        console.log("[AdminContext] Authentication response:", {
+          hasToken: Boolean((resp as any)?.token),
+          sessionId: (resp as any)?.sessionId,
+          sellerId: (resp as any)?.seller?.id,
+        });
+
         if (resp && (resp as any).token) {
           const token = (resp as any).token as string;
+          console.log("[AdminContext] Authentication successful");
+
           setAdminToken(token);
-          localStorage.setItem("tedytech_admin_token", token);
+          try {
+            localStorage.setItem("tedytech_admin_token", token);
+            console.log("[AdminContext] Token saved to localStorage");
+          } catch (e) {
+            console.error(
+              "[AdminContext] Failed to save token to localStorage:",
+              e,
+            );
+          }
+
           setIsAuthorized(true);
         } else {
+          console.error(
+            "[AdminContext] Authentication failed: No token in response",
+          );
           setIsAuthorized(false);
         }
       } catch (err) {
-        console.error("[AdminContext] authentication failed", err);
-        setWebAppError(
-          (prev) =>
-            prev ??
-            "Authentication failed during startup. Check Convex deployment and Telegram init data.",
+        console.error(
+          `[AdminContext] Authentication error (attempt ${attempt}):`,
+          {
+            error: err,
+            message: (err as Error)?.message,
+            stack: (err as Error)?.stack,
+          },
         );
-        setIsAuthorized(false);
+
+        // Retry logic
+        if (attempt < MAX_AUTH_RETRIES) {
+          console.log(`[AdminContext] Retrying authentication in 2s...`);
+          setTimeout(() => tryAuth(attempt + 1), 2000);
+        } else {
+          console.error("[AdminContext] Max auth retries exceeded");
+          setWebAppError(
+            (prev) =>
+              prev ??
+              "Authentication failed after multiple attempts. Check Convex deployment and network connection.",
+          );
+          setIsAuthorized(false);
+        }
       }
     };
 

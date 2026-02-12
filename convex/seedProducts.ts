@@ -1,4 +1,4 @@
-import { mutation } from "convex/server";
+import { mutation } from "./_generated/server";
 
 /*
   WARNING: seedProducts is a privileged, destructive admin function.
@@ -45,7 +45,7 @@ export const seedProducts = mutation(
     // CONVEX_SEED_ADMIN_TOKEN=xxxx npx convex dev
     // Then run seedProducts from dashboard with { "adminToken": "xxxx" }
 
-    const existing = await db.table("products").collect();
+    let existing = await db.table("products").collect();
     if (existing.length > 0) {
       return {
         ok: false,
@@ -53,7 +53,7 @@ export const seedProducts = mutation(
         count: existing.length,
       };
     }
-    const existing = await db.table("products").collect();
+    existing = await db.table("products").collect();
     if (existing.length > 0) {
       return {
         ok: false,

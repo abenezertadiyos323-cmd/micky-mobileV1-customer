@@ -4,6 +4,9 @@ import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { AdminProvider } from "@/contexts/AdminContext";
 import { Toaster } from "sonner";
 import { KonstaProvider } from "konsta/react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { initGlobalErrorHandlers } from "@/lib/errorHandler";
+import { validateEnv } from "@/lib/envValidation";
 import App from "./App";
 import "./index.css";
 
@@ -63,33 +66,44 @@ console.log(
 );
 
 const bootstrap = () => {
-  const convexUrl = import.meta.env.VITE_CONVEX_URL;
+  // Initialize global error handlers
+  initGlobalErrorHandlers();
 
-  if (!convexUrl) {
-    console.error("[AdminApp] Missing VITE_CONVEX_URL. App cannot connect to Convex.");
+  // Validate environment variables
+  console.log("[AdminApp] Validating environment");
+  const { isValid, config, errors } = validateEnv();
+
+  if (!isValid) {
+    console.error("[AdminApp] Environment validation failed:", errors);
     renderStartupMessage(
-      "Configuration Missing",
-      "VITE_CONVEX_URL is not configured. Add it to your environment variables and rebuild the app.",
+      "Configuration Error",
+      "The app is missing required environment variables:",
+      {
+        message: errors.join("\n"),
+      },
     );
     return;
   }
 
-  console.log("[AdminApp] VITE_CONVEX_URL detected. Creating Convex client.", {
-    convexUrl,
+  console.log("[AdminApp] Environment validated. Creating Convex client.", {
+    convexUrl: config.VITE_CONVEX_URL,
+    adminChatIdConfigured: Boolean(config.VITE_ADMIN_CHAT_ID),
   });
 
-  const convex = new ConvexReactClient(convexUrl);
+  const convex = new ConvexReactClient(config.VITE_CONVEX_URL);
 
   createRoot(ensureRootElement()).render(
     <React.StrictMode>
-      <ConvexProvider client={convex}>
-        <KonstaProvider theme="ios">
-          <AdminProvider>
-            <App />
-            <Toaster position="top-center" />
-          </AdminProvider>
-        </KonstaProvider>
-      </ConvexProvider>
+      <ErrorBoundary>
+        <ConvexProvider client={convex}>
+          <KonstaProvider theme="ios">
+            <AdminProvider>
+              <App />
+              <Toaster position="top-center" />
+            </AdminProvider>
+          </KonstaProvider>
+        </ConvexProvider>
+      </ErrorBoundary>
     </React.StrictMode>,
   );
 };

@@ -83,11 +83,11 @@ export const authenticateWithTelegram = mutation({
       token,
       sessionId,
       seller: {
-        id: seller._id,
-        telegramId: seller.telegramId,
-        businessName: seller.businessName,
-        businessType: seller.businessType,
-        role: seller.role,
+        id: resolvedSeller._id,
+        telegramId: resolvedSeller.telegramId,
+        businessName: resolvedSeller.businessName,
+        businessType: resolvedSeller.businessType,
+        role: resolvedSeller.role,
       },
     };
   },

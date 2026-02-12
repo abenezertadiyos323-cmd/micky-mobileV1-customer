@@ -1,4 +1,4 @@
-import { mutation } from "convex/server";
+import { mutation } from "./_generated/server";
 
 // Simple Convex action to verify a Telegram identity and associate it with a session/customer.
 // This is a lightweight replacement for the previous Supabase edge function.
