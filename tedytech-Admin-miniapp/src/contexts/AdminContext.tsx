@@ -102,29 +102,88 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           root.classList.remove("dark");
         }
 
+        // Helper: convert hex/rgba color to H S% L% triple used by our HSL vars
+        const hexToHslTriple = (hexOrColor: string) => {
+          try {
+            // Create a temporary element to normalize color values to rgb()
+            const el = document.createElement("div");
+            el.style.color = hexOrColor;
+            document.body.appendChild(el);
+            const computed = getComputedStyle(el).color; // e.g. rgb(r, g, b) or rgba(...)
+            document.body.removeChild(el);
+
+            const m = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+            if (!m) return null;
+            const r = Number(m[1]) / 255;
+            const g = Number(m[2]) / 255;
+            const b = Number(m[3]) / 255;
+
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h = 0;
+            let s = 0;
+            const l = (max + min) / 2;
+
+            if (max !== min) {
+              const d = max - min;
+              s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+              switch (max) {
+                case r:
+                  h = (g - b) / d + (g < b ? 6 : 0);
+                  break;
+                case g:
+                  h = (b - r) / d + 2;
+                  break;
+                case b:
+                  h = (r - g) / d + 4;
+                  break;
+              }
+              h /= 6;
+            }
+
+            const H = Math.round(h * 360);
+            const S = Math.round(s * 100);
+            const L = Math.round(l * 100);
+
+            return `${H} ${S}% ${L}%`;
+          } catch (e) {
+            return null;
+          }
+        };
+
         if (tg.themeParams) {
           if (tg.themeParams.bg_color) {
+            const triple = hexToHslTriple(tg.themeParams.bg_color);
+            if (triple) root.style.setProperty("--background", triple);
             root.style.setProperty("--tg-bg-color", tg.themeParams.bg_color);
           }
           if (tg.themeParams.text_color) {
+            const triple = hexToHslTriple(tg.themeParams.text_color);
+            if (triple) root.style.setProperty("--foreground", triple);
             root.style.setProperty(
               "--tg-text-color",
               tg.themeParams.text_color,
             );
           }
           if (tg.themeParams.button_color) {
+            const triple = hexToHslTriple(tg.themeParams.button_color);
+            if (triple) root.style.setProperty("--primary", triple);
             root.style.setProperty(
               "--tg-button-color",
               tg.themeParams.button_color,
             );
           }
           if (tg.themeParams.button_text_color) {
+            const triple = hexToHslTriple(tg.themeParams.button_text_color);
+            if (triple) root.style.setProperty("--primary-foreground", triple);
             root.style.setProperty(
               "--tg-button-text-color",
               tg.themeParams.button_text_color,
             );
           }
           if (tg.themeParams.secondary_bg_color) {
+            const triple = hexToHslTriple(tg.themeParams.secondary_bg_color);
+            if (triple) root.style.setProperty("--secondary", triple);
             root.style.setProperty(
               "--tg-secondary-bg-color",
               tg.themeParams.secondary_bg_color,
@@ -184,8 +243,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("[AdminContext] localStorage is unavailable", error);
-      setWebAppError((prev) =>
-        prev ?? "Local storage is unavailable. Session cannot be persisted.",
+      setWebAppError(
+        (prev) =>
+          prev ?? "Local storage is unavailable. Session cannot be persisted.",
       );
     }
   }, []);
@@ -234,9 +294,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           console.error(
             "[AdminContext] Missing Convex function reference: api.mutations.sellers.authenticateWithTelegram",
           );
-          setWebAppError((prev) =>
-            prev ??
-            "Configuration error: admin authentication mutation is unavailable. Regenerate Convex API and deploy sellers mutation.",
+          setWebAppError(
+            (prev) =>
+              prev ??
+              "Configuration error: admin authentication mutation is unavailable. Regenerate Convex API and deploy sellers mutation.",
           );
           setIsAuthorized(false);
           return;
@@ -262,9 +323,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         }
       } catch (err) {
         console.error("[AdminContext] authentication failed", err);
-        setWebAppError((prev) =>
-          prev ??
-          "Authentication failed during startup. Check Convex deployment and Telegram init data.",
+        setWebAppError(
+          (prev) =>
+            prev ??
+            "Authentication failed during startup. Check Convex deployment and Telegram init data.",
         );
         setIsAuthorized(false);
       }

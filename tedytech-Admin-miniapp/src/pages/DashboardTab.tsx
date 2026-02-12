@@ -13,6 +13,7 @@ import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useAdmin } from "@/contexts/AdminContext";
 import { Package, Activity } from "lucide-react";
 import { formatRelativeTime } from "@/lib/utils";
+import { Block } from "konsta/react";
 
 export function DashboardTab() {
   const { setActiveTab } = useAdmin();
@@ -30,56 +31,69 @@ export function DashboardTab() {
       {/* Offline Indicator (Priority 0 - Critical Status) */}
       {!isOnline && <OfflineIndicator />}
 
-      {/* 1. HOT LEADS (Priority 1 - Most Important) */}
-      <HotLeadsSection leads={hotLeads} isLoading={hotLeadsLoading} />
+      <Block strong>
+        {/* 1. HOT LEADS (Priority 1 - Most Important) */}
+        <HotLeadsSection leads={hotLeads} isLoading={hotLeadsLoading} />
+      </Block>
 
-      {/* 2. Orders/Exchanges Summary (Priority 2) */}
-      <OrdersSummaryCard
-        phoneActions={actionStats.totalActions}
-        exchangeRequests={exchangeStats.totalExchanges}
-        onViewAll={() => setActiveTab("orders")}
-      />
-
-      {/* 3. Inventory Summary (Priority 3) */}
-      <InventorySummaryCard
-        totalProducts={productStats.totalProducts}
-        byStatus={{
-          active: productStats.activeProducts,
-          draft: productStats.draftProducts,
-          archived: productStats.archivedProducts,
-        }}
-        onViewAll={() => setActiveTab("inventory")}
-      />
-
-      {/* 4. Quick Stats Grid (Priority 4) */}
-      <div className="grid grid-cols-2 gap-3 px-4">
-        <StatCard
-          label="Today's Activity"
-          value={todayActivity}
-          icon={Activity}
+      <Block strong>
+        {/* 2. Orders/Exchanges Summary (Priority 2) */}
+        <OrdersSummaryCard
+          phoneActions={actionStats.totalActions}
+          exchangeRequests={exchangeStats.totalExchanges}
+          onViewAll={() => setActiveTab("orders")}
         />
-        <StatCard
-          label="Active Products"
-          value={productStats.activeProducts}
-          icon={Package}
+      </Block>
+
+      <Block strong>
+        {/* 3. Inventory Summary (Priority 3) */}
+        <InventorySummaryCard
+          totalProducts={productStats.totalProducts}
+          byStatus={{
+            active: productStats.activeProducts,
+            draft: productStats.draftProducts,
+            archived: productStats.archivedProducts,
+          }}
+          onViewAll={() => setActiveTab("inventory")}
         />
-      </div>
+      </Block>
 
-      {/* 5. Recent Activity (Priority 5) */}
-      <ActivityCard
-        activities={activities}
-        maxItems={5}
-        onActivityClick={(activity) => {
-          if (activity.type === "exchange_request" || activity.type === "phone_action") {
-            setActiveTab("orders");
-          }
-        }}
-      />
+      <Block strong>
+        {/* 4. Quick Stats Grid (Priority 4) */}
+        <div className="grid grid-cols-2 gap-3 px-0">
+          <StatCard
+            label="Today's Activity"
+            value={todayActivity}
+            icon={Activity}
+          />
+          <StatCard
+            label="Active Products"
+            value={productStats.activeProducts}
+            icon={Package}
+          />
+        </div>
+      </Block>
 
-      {/* Last Sync Time */}
-      <p className="text-xs text-gray-400 text-center pb-4">
-        Updated {formatRelativeTime(lastSyncTime)}
-      </p>
+      <Block strong>
+        {/* 5. Recent Activity (Priority 5) */}
+        <ActivityCard
+          activities={activities}
+          maxItems={5}
+          onActivityClick={(activity) => {
+            if (
+              activity.type === "exchange_request" ||
+              activity.type === "phone_action"
+            ) {
+              setActiveTab("orders");
+            }
+          }}
+        />
+
+        {/* Last Sync Time */}
+        <p className="text-xs text-gray-400 text-center pb-4 mt-3">
+          Updated {formatRelativeTime(lastSyncTime)}
+        </p>
+      </Block>
     </div>
   );
 }
