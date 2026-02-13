@@ -6,6 +6,9 @@ export default defineConfig(({ mode }) => {
   const plugins: Array<any> = [react()];
 
   return {
+    define: {
+      __ADMIN_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    },
     server: {
       host: "::",
       port: 5174,
@@ -19,6 +22,9 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins,
+    define: {
+      __ADMIN_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

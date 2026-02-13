@@ -1,43 +1,74 @@
 export interface EnvConfig {
   VITE_CONVEX_URL: string;
-  VITE_ADMIN_CHAT_ID: string | null;
+  VITE_ADMIN_CHAT_ID: string;
+  VITE_APP_ENVIRONMENT: string;
 }
 
-export function validateEnv(): {
+export interface EnvValidationResult {
   isValid: boolean;
   config: EnvConfig;
   errors: string[];
-} {
+  raw: {
+    VITE_CONVEX_URL: string;
+    VITE_ADMIN_CHAT_ID: string;
+    VITE_APP_ENVIRONMENT: string;
+  };
+}
+
+const trimEnv = (value: string | undefined): string => (value ?? "").trim();
+
+export const getConvexHostname = (value: string): string => {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return "";
+  }
+};
+
+export function validateEnv(): EnvValidationResult {
   const errors: string[] = [];
 
-  // Validate VITE_CONVEX_URL
-  const convexUrl = import.meta.env.VITE_CONVEX_URL?.trim();
-  if (!convexUrl) {
-    errors.push("VITE_CONVEX_URL is not configured");
-  } else if (!convexUrl.startsWith("https://")) {
-    errors.push("VITE_CONVEX_URL must start with https://");
+  const raw = {
+    VITE_CONVEX_URL: import.meta.env.VITE_CONVEX_URL ?? "",
+    VITE_ADMIN_CHAT_ID: import.meta.env.VITE_ADMIN_CHAT_ID ?? "",
+    VITE_APP_ENVIRONMENT: import.meta.env.VITE_APP_ENVIRONMENT ?? "",
+  };
+
+  const config: EnvConfig = {
+    VITE_CONVEX_URL: trimEnv(raw.VITE_CONVEX_URL),
+    VITE_ADMIN_CHAT_ID: trimEnv(raw.VITE_ADMIN_CHAT_ID),
+    VITE_APP_ENVIRONMENT: trimEnv(raw.VITE_APP_ENVIRONMENT),
+  };
+
+  if (!config.VITE_CONVEX_URL) {
+    errors.push(`VITE_CONVEX_URL is missing: "${config.VITE_CONVEX_URL}"`);
+  } else {
+    if (!config.VITE_CONVEX_URL.startsWith("https://")) {
+      errors.push(
+        `VITE_CONVEX_URL must start with "https://": "${config.VITE_CONVEX_URL}"`,
+      );
+    }
+    if (!config.VITE_CONVEX_URL.includes("convex.cloud")) {
+      errors.push(
+        `VITE_CONVEX_URL must contain "convex.cloud": "${config.VITE_CONVEX_URL}"`,
+      );
+    }
   }
 
-  // Validate VITE_ADMIN_CHAT_ID
-  const adminChatId = import.meta.env.VITE_ADMIN_CHAT_ID?.trim();
-  if (!adminChatId || adminChatId === "") {
+  if (!config.VITE_ADMIN_CHAT_ID) {
     errors.push(
-      "VITE_ADMIN_CHAT_ID is not configured (required for admin authorization)",
+      `VITE_ADMIN_CHAT_ID is missing (required for admin authorization): "${config.VITE_ADMIN_CHAT_ID}"`,
     );
-  } else if (!/^\d+$/.test(adminChatId)) {
+  } else if (!/^\d+$/.test(config.VITE_ADMIN_CHAT_ID)) {
     errors.push(
-      "VITE_ADMIN_CHAT_ID must be a numeric Telegram user ID (found: '" +
-        adminChatId +
-        "')",
+      `VITE_ADMIN_CHAT_ID must contain digits only: "${config.VITE_ADMIN_CHAT_ID}"`,
     );
   }
 
   return {
     isValid: errors.length === 0,
-    config: {
-      VITE_CONVEX_URL: convexUrl || "",
-      VITE_ADMIN_CHAT_ID: adminChatId || null,
-    },
+    config,
     errors,
+    raw,
   };
 }

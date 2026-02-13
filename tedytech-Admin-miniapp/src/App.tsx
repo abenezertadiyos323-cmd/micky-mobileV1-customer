@@ -26,7 +26,8 @@ function TabLoader() {
 }
 
 export default function App() {
-  const { activeTab, isWebAppReady, webAppError, isAuthorized } = useAdmin();
+  const { activeTab, isWebAppReady, webAppError, isAuthorized, telegramUserId } =
+    useAdmin();
   const [initTimedOut, setInitTimedOut] = useState(false);
 
   useEffect(() => {
