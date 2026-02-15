@@ -3,6 +3,7 @@ import { api } from "convex_generated/api";
 import { useAdmin } from "@/contexts/AdminContext";
 import type { Activity } from "@/types/admin";
 import { mockActivities } from "@/data/mockData";
+import { logQueryDebug } from "@/lib/queryDebug";
 
 function getActionDescription(actionType: string) {
   switch (actionType) {
@@ -23,6 +24,26 @@ function getActionDescription(actionType: string) {
 export function useRecentActivity(limit: number = 20) {
   const { adminToken } = useAdmin();
   const authArgs = adminToken ? { token: adminToken } : "skip";
+  const adminTokenPresent = Boolean(adminToken);
+  logQueryDebug({
+    hook: "useRecentActivity",
+    query: "api.phoneActions.listAllPhoneActions",
+    adminTokenPresent,
+    args: authArgs,
+  });
+  logQueryDebug({
+    hook: "useRecentActivity",
+    query: "api.phoneActions.listAllExchangeRequests",
+    adminTokenPresent,
+    args: authArgs,
+  });
+  const searchArgs = { limit: 50 };
+  logQueryDebug({
+    hook: "useRecentActivity",
+    query: "api.search.listRecentSearches",
+    adminTokenPresent,
+    args: searchArgs,
+  });
   const convexActions = useQuery(
     api.phoneActions.listAllPhoneActions,
     authArgs,
@@ -31,7 +52,7 @@ export function useRecentActivity(limit: number = 20) {
     api.phoneActions.listAllExchangeRequests,
     authArgs,
   );
-  const convexSearches = useQuery(api.search.listRecentSearches, { limit: 50 });
+  const convexSearches = useQuery(api.search.listRecentSearches, searchArgs);
 
   const isLoading =
     convexActions === undefined ||

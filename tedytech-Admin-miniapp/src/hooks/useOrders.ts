@@ -3,6 +3,7 @@ import { api } from "convex_generated/api";
 import { useAdmin } from "@/contexts/AdminContext";
 import type { PhoneAction } from "@/types/order";
 import { mockPhoneActions } from "@/data/mockData";
+import { logQueryDebug } from "@/lib/queryDebug";
 
 /**
  * Fetch all phone actions
@@ -10,6 +11,12 @@ import { mockPhoneActions } from "@/data/mockData";
 export function usePhoneActions() {
   const { adminToken } = useAdmin();
   const authArgs = adminToken ? { token: adminToken } : "skip";
+  logQueryDebug({
+    hook: "usePhoneActions",
+    query: "api.phoneActions.listAllPhoneActions",
+    adminTokenPresent: Boolean(adminToken),
+    args: authArgs,
+  });
   const convexActions = useQuery(api.phoneActions.listAllPhoneActions, authArgs);
 
   // Fallback to mock data if Convex data is unavailable

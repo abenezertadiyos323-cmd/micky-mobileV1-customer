@@ -7,6 +7,10 @@ import { KonstaProvider } from "konsta/react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { initGlobalErrorHandlers } from "@/lib/errorHandler";
 import { getConvexHostname, validateEnv } from "@/lib/envValidation";
+import {
+  ADMIN_QUERY_DEBUG_EVENT,
+  type QueryDebugDetail,
+} from "@/lib/queryDebug";
 import App from "./App";
 import "./index.css";
 
@@ -28,6 +32,9 @@ type StartupDiagnostics = {
   convexHostname: string;
   adminChatIdExists: boolean;
   telegramWebAppExists: boolean;
+  adminTokenPresent: "true" | "false" | "unknown";
+  queryArgsType: "object" | "string" | "unknown";
+  querySource: string;
   convexPingStatus: ConvexPingStatus;
   convexPingError: string;
   errors: string[];
@@ -53,6 +60,9 @@ const diagnostics: StartupDiagnostics = {
   convexHostname: getConvexHostname(getEnvString(import.meta.env.VITE_CONVEX_URL)),
   adminChatIdExists: Boolean(getEnvString(import.meta.env.VITE_ADMIN_CHAT_ID)),
   telegramWebAppExists: Boolean(window.Telegram?.WebApp),
+  adminTokenPresent: "unknown",
+  queryArgsType: "unknown",
+  querySource: "not reported",
   convexPingStatus: "pending",
   convexPingError: "",
   errors: [],
@@ -159,6 +169,9 @@ const renderDiagnosticsOverlay = () => {
     }`,
     `VITE_ADMIN_CHAT_ID: ${diagnostics.adminChatIdExists ? "present" : "missing"}`,
     `window.Telegram?.WebApp: ${diagnostics.telegramWebAppExists ? "present" : "missing"}`,
+    `adminToken_present: ${diagnostics.adminTokenPresent}`,
+    `query_args_type: ${diagnostics.queryArgsType}`,
+    `query_source: ${quote(diagnostics.querySource)}`,
     `convex_ping: ${
       diagnostics.convexPingStatus === "failed"
         ? `failed (${diagnostics.convexPingError})`
@@ -294,7 +307,7 @@ const initOverlayErrorHooks = () => {
       "The app crashed after initial render.",
       formatted,
     );
-  });
+  }, true);
 
   window.addEventListener("unhandledrejection", (event) => {
     const formatted = formatError(event.reason);
@@ -307,9 +320,24 @@ const initOverlayErrorHooks = () => {
   });
 };
 
+const initQueryDebugHooks = () => {
+  window.addEventListener(ADMIN_QUERY_DEBUG_EVENT, (event) => {
+    const detail = (event as CustomEvent<QueryDebugDetail>).detail;
+    if (!detail) {
+      return;
+    }
+
+    diagnostics.adminTokenPresent = detail.adminTokenPresent ? "true" : "false";
+    diagnostics.queryArgsType = detail.queryArgsType;
+    diagnostics.querySource = `${detail.hook} -> ${detail.query}`;
+    renderDiagnosticsOverlay();
+  });
+};
+
 const bootstrap = async () => {
   renderDiagnosticsOverlay();
   initOverlayErrorHooks();
+  initQueryDebugHooks();
   initGlobalErrorHandlers();
 
   logInfo("Bootstrap start", {

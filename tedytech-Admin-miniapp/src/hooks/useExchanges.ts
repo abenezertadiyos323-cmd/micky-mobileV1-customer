@@ -3,6 +3,7 @@ import { api } from "convex_generated/api";
 import { useAdmin } from "@/contexts/AdminContext";
 import type { ExchangeRequest, OrderStatus } from "@/types/order";
 import { mockExchangeRequests } from "@/data/mockData";
+import { logQueryDebug } from "@/lib/queryDebug";
 
 /**
  * Fetch all exchange requests
@@ -10,6 +11,12 @@ import { mockExchangeRequests } from "@/data/mockData";
 export function useExchangeRequests() {
   const { adminToken } = useAdmin();
   const authArgs = adminToken ? { token: adminToken } : "skip";
+  logQueryDebug({
+    hook: "useExchangeRequests",
+    query: "api.phoneActions.listAllExchangeRequests",
+    adminTokenPresent: Boolean(adminToken),
+    args: authArgs,
+  });
   const convexExchanges = useQuery(
     api.phoneActions.listAllExchangeRequests,
     authArgs,

@@ -4,10 +4,24 @@ import { api } from "convex_generated/api";
 import { useAdmin } from "@/contexts/AdminContext";
 import { HotLead } from "@/types/hotLead";
 import { formatWaitTime, getLeadPriorityIcon } from "@/lib/utils";
+import { logQueryDebug } from "@/lib/queryDebug";
 
 export function useHotLeads(limit: number = 10) {
   const { adminToken } = useAdmin();
   const authArgs = adminToken ? { token: adminToken } : "skip";
+  const adminTokenPresent = Boolean(adminToken);
+  logQueryDebug({
+    hook: "useHotLeads",
+    query: "api.phoneActions.listAllPhoneActions",
+    adminTokenPresent,
+    args: authArgs,
+  });
+  logQueryDebug({
+    hook: "useHotLeads",
+    query: "api.phoneActions.listAllExchangeRequests",
+    adminTokenPresent,
+    args: authArgs,
+  });
   const actions = useQuery(api.phoneActions.listAllPhoneActions, authArgs);
   const exchanges = useQuery(api.phoneActions.listAllExchangeRequests, authArgs);
 
