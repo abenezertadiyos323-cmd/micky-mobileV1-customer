@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "cd tedytech-Admin-miniapp && npm ci",
-  "buildCommand": "cd tedytech-Admin-miniapp && npm run build",
-  "outputDirectory": "tedytech-Admin-miniapp/dist"
+  "installCommand": "cd tedytech-admin-miniapp && npm ci",
+  "buildCommand": "cd tedytech-admin-miniapp && npm run build",
+  "outputDirectory": "tedytech-admin-miniapp/dist"
 }

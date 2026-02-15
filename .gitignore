@@ -13,7 +13,7 @@ node_modules/
 # Ignore generated build outputs
 customer-app/dist/
 tedytech-Customer-miniapp/customer-app/dist/
-tedytech-Admin-miniapp/dist/
+tedytech-admin-miniapp/dist/
 
 # Local agent settings (should remain local)
 .claude/settings.local.json

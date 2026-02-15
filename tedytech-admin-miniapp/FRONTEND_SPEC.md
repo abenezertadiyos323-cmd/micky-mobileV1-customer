@@ -291,7 +291,7 @@ No backend auth changes here; structure code so backend auth can be added later 
 
 ## IMPLEMENTATION ORDER (FRONTEND FOCUS)
 
-1. Confirm React + Vite + TypeScript + Tailwind + lucide-react setup in `/tedytech-Admin-miniapp`.
+1. Confirm React + Vite + TypeScript + Tailwind + lucide-react setup in `/tedytech-admin-miniapp`.
 2. Implement global layout (header, bottom navigation, sidebar stub, page structure).
 3. Implement **Dashboard/Home** with priority on Hot Leads / Key Activity + other cards, using current Convex data.
 4. Implement **Inventory** screen using `products` data.
