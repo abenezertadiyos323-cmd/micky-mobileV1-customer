@@ -14,7 +14,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "convex_generated/*": ["./src/convex/_generated/*"]
+      "convex_generated/*": ["../convex/_generated/*"]
     },
     "types": ["vite/client"]
   },

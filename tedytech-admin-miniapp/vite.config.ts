@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
-        convex_generated: path.resolve(__dirname, "./src/convex/_generated"),
+        convex_generated: path.resolve(__dirname, "../convex/_generated"),
       },
     },
   };
