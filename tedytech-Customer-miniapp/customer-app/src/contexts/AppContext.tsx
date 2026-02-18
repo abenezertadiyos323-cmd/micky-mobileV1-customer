@@ -153,7 +153,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     telegramIdentity,
     verifyTelegram,
     authError,
-    clearAuthError,
+    clearAuthError = () => {},
   } = useAuth();
 
   // For backwards compatibility, create a session ID from auth user ID
