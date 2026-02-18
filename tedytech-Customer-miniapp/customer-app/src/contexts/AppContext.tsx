@@ -38,20 +38,41 @@ function AuthGateScreen({
   onRetry: () => void;
 }) {
   const isTelegramWebApp = !!window?.Telegram?.WebApp;
+  const hasInitData = !!window?.Telegram?.WebApp?.initData;
+  const uaIsTelegram = /Telegram/i.test(navigator.userAgent);
+  const isInTelegram = isTelegramWebApp || uaIsTelegram;
+  const showDebugOverlay =
+    import.meta.env.VITE_APP_ENVIRONMENT !== "production" ||
+    new URLSearchParams(window.location.search).get("debug") === "1";
+  const debugUserAgent =
+    navigator.userAgent.length > 80
+      ? `${navigator.userAgent.slice(0, 80)}...`
+      : navigator.userAgent;
 
   useEffect(() => {
     window.Telegram?.WebApp?.ready?.();
   }, []);
 
+  const debugOverlay = showDebugOverlay ? (
+    <div className="fixed left-2 top-2 z-[9999] rounded bg-black/80 px-2 py-1 text-[10px] text-white">
+      <div>{`hasTelegramWebApp: ${isTelegramWebApp}`}</div>
+      <div>{`hasInitData: ${hasInitData}`}</div>
+      <div>{`platform: ${window.Telegram?.WebApp?.platform ?? "n/a"}`}</div>
+      <div>{`version: ${window.Telegram?.WebApp?.version ?? "n/a"}`}</div>
+      <div>{`userAgent: ${debugUserAgent}`}</div>
+    </div>
+  ) : null;
+
   if (state === "needs_telegram") {
     return (
       <div className="min-h-screen bg-background px-6 flex items-center justify-center">
+        {debugOverlay}
         <div className="w-full max-w-sm rounded-2xl border bg-card p-6 text-center">
           <h1 className="text-lg font-semibold">Open this inside Telegram</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             This mini app must be launched from Telegram.
           </p>
-          {!isTelegramWebApp && (
+          {!isInTelegram && (
             <a
               href={TELEGRAM_STARTAPP_URL}
               className="mt-5 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
@@ -67,6 +88,7 @@ function AuthGateScreen({
   if (state === "error") {
     return (
       <div className="min-h-screen bg-background px-6 flex items-center justify-center">
+        {debugOverlay}
         <div className="w-full max-w-sm rounded-2xl border bg-card p-6 text-center">
           <h1 className="text-lg font-semibold">Couldn&apos;t sign you in</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -93,6 +115,7 @@ function AuthGateScreen({
 
   return (
     <div className="min-h-screen bg-background px-6 flex items-center justify-center">
+      {debugOverlay}
       <p className="text-sm text-muted-foreground">
         {state === "verifying"
           ? "Verifying Telegram session..."
