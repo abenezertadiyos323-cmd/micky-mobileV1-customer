@@ -15,43 +15,78 @@ import {
 } from "@/hooks/useFavorites";
 import type { Phone, SortOption } from "@/types/phone";
 
-// Declare Telegram WebApp global
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp?: {
-        initData?: string;
-        initDataUnsafe?: {
-          user?: {
-            id: number;
-            username?: string;
-            first_name?: string;
-            last_name?: string;
-          };
-        };
-        // Theme parameters provided by Telegram
-        themeParams?: {
-          bg_color?: string;
-          text_color?: string;
-          button_color?: string;
-          button_text_color?: string;
-          secondary_bg_color?: string;
-        };
-        // Typical lifecycle methods
-        ready?: () => void;
-        expand?: () => void;
-        close?: () => void;
-        // MainButton API (partial)
-        MainButton?: {
-          setText?: (s: string) => void;
-          show?: () => void;
-          hide?: () => void;
-          onClick?: (fn: () => void) => void;
-          offClick?: (fn: () => void) => void;
-        };
-      };
-    };
+const TELEGRAM_STARTAPP_URL = "https://t.me/<BOT_USERNAME>?startapp=home";
+type TelegramGateState =
+  | "loading"
+  | "needs_telegram"
+  | "verifying"
+  | "error"
+  | "ready";
+
+function AuthGateScreen({
+  state,
+  errorMessage,
+  onRetry,
+}: {
+  state: TelegramGateState;
+  errorMessage?: string | null;
+  onRetry: () => void;
+}) {
+  if (state === "needs_telegram") {
+    return (
+      <div className="min-h-screen bg-background px-6 flex items-center justify-center">
+        <div className="w-full max-w-sm rounded-2xl border bg-card p-6 text-center">
+          <h1 className="text-lg font-semibold">Open this inside Telegram</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            This mini app must be launched from Telegram.
+          </p>
+          <a
+            href={TELEGRAM_STARTAPP_URL}
+            className="mt-5 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+          >
+            Open in Telegram
+          </a>
+        </div>
+      </div>
+    );
   }
+
+  if (state === "error") {
+    return (
+      <div className="min-h-screen bg-background px-6 flex items-center justify-center">
+        <div className="w-full max-w-sm rounded-2xl border bg-card p-6 text-center">
+          <h1 className="text-lg font-semibold">Couldn&apos;t sign you in</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {errorMessage ||
+              "Please reopen this mini app from Telegram and try again."}
+          </p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="mt-5 inline-flex w-full items-center justify-center rounded-md border border-border bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground"
+          >
+            Retry
+          </button>
+          <a
+            href={TELEGRAM_STARTAPP_URL}
+            className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+          >
+            Reopen in Telegram
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background px-6 flex items-center justify-center">
+      <p className="text-sm text-muted-foreground">
+        {state === "verifying"
+          ? "Verifying Telegram session..."
+          : "Loading..."}
+      </p>
+    </div>
+  );
 }
 
 interface AppContextType {
@@ -59,7 +94,10 @@ interface AppContextType {
   authUserId: string | null;
   isAuthLoading: boolean;
   isAuthenticated: boolean;
+  isTelegramAuthenticated: boolean;
+  customerId: string | null;
   telegramUserId: number | null;
+  telegramUsername: string | null;
 
   // Legacy session support for existing hooks
   sessionId: string | null;
@@ -106,9 +144,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     authUserId,
     isLoading: isAuthLoading,
     isAuthenticated,
+    isTelegramAuthenticated,
     telegramIdentity,
     verifyTelegram,
     authError,
+    clearAuthError,
   } = useAuth();
 
   // For backwards compatibility, create a session ID from auth user ID
@@ -143,73 +183,130 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [targetExchangePhone, setTargetExchangePhone] = useState<Phone | null>(
     null,
   );
-
-  // Telegram WebApp verification on load
-  useEffect(() => {
-    if (!isAuthenticated || !authUserId) return;
-    if (telegramIdentity) return; // Already verified
-
-    const tg = window.Telegram?.WebApp;
-    if (!tg?.initData) return; // Not in Telegram context
-
-    // Verify telegram identity
-    console.log("Attempting Telegram verification...");
-    verifyTelegram(tg.initData).then((success) => {
-      if (success) {
-        console.log("Telegram identity verified and linked");
-      } else {
-        console.log("Telegram verification failed or not in Telegram context");
-      }
-    });
-  }, [isAuthenticated, authUserId, telegramIdentity, verifyTelegram]);
-
-  // Initialize Telegram WebApp: lifecycle, theme, main button
   const [isInTelegram, setIsInTelegram] = React.useState(false);
+  const [telegramGateState, setTelegramGateState] =
+    React.useState<TelegramGateState>("loading");
+  const hasAttemptedTelegramAuth = React.useRef(false);
 
-  useEffect(() => {
+  const retryTelegramAuth = useCallback(() => {
+    clearAuthError();
+    hasAttemptedTelegramAuth.current = false;
     const tg = window.Telegram?.WebApp;
-    if (!tg) return;
+    if (!tg?.initData) {
+      setTelegramGateState("needs_telegram");
+      return;
+    }
+    setTelegramGateState("loading");
+  }, [clearAuthError]);
 
-    setIsInTelegram(true);
+  // Initialize Telegram WebApp: lifecycle, theme, main button.
+  useEffect(() => {
+    try {
+      const tg = window.Telegram?.WebApp;
+      if (!tg?.initData) {
+        setIsInTelegram(false);
+        setTelegramGateState("needs_telegram");
+        return;
+      }
 
-    // Basic lifecycle
-    tg.ready?.();
-    tg.expand?.();
+      setIsInTelegram(true);
+      setTelegramGateState("loading");
 
-    // Apply theme params (set CSS variables for easy theming)
-    const tp = tg.themeParams;
-    if (tp) {
-      if (tp.bg_color)
-        document.documentElement.style.setProperty(
-          "--tg-bg-color",
-          tp.bg_color,
-        );
-      if (tp.text_color)
-        document.documentElement.style.setProperty(
-          "--tg-text-color",
-          tp.text_color,
-        );
-      if (tp.secondary_bg_color)
-        document.documentElement.style.setProperty(
-          "--tg-secondary-bg-color",
-          tp.secondary_bg_color,
-        );
-      if (tp.button_color)
-        document.documentElement.style.setProperty(
-          "--tg-button-color",
-          tp.button_color,
-        );
-      if (tp.button_text_color)
-        document.documentElement.style.setProperty(
-          "--tg-button-text-color",
-          tp.button_text_color,
-        );
+      // Basic lifecycle
+      tg.ready?.();
+      tg.expand?.();
+
+      // Apply theme params (set CSS variables for easy theming)
+      const tp = tg.themeParams;
+      if (tp) {
+        if (tp.bg_color)
+          document.documentElement.style.setProperty(
+            "--tg-bg-color",
+            tp.bg_color,
+          );
+        if (tp.text_color)
+          document.documentElement.style.setProperty(
+            "--tg-text-color",
+            tp.text_color,
+          );
+        if (tp.secondary_bg_color)
+          document.documentElement.style.setProperty(
+            "--tg-secondary-bg-color",
+            tp.secondary_bg_color,
+          );
+        if (tp.button_color)
+          document.documentElement.style.setProperty(
+            "--tg-button-color",
+            tp.button_color,
+          );
+        if (tp.button_text_color)
+          document.documentElement.style.setProperty(
+            "--tg-button-text-color",
+            tp.button_text_color,
+          );
+      }
+    } catch {
+      setTelegramGateState("error");
     }
 
     return () => {
       // no teardown required for ready/expand
     };
   }, []);
+
+  // Verify Telegram initData with backend once the anonymous session is ready.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function runGate() {
+      if (telegramGateState === "needs_telegram") return;
+      if (isAuthLoading) return;
+
+      if (!isAuthenticated || !authUserId) {
+        if (!cancelled) setTelegramGateState("error");
+        return;
+      }
+
+      if (isTelegramAuthenticated && telegramIdentity) {
+        if (!cancelled) setTelegramGateState("ready");
+        return;
+      }
+
+      const tg = window.Telegram?.WebApp;
+      if (!tg?.initData) {
+        if (!cancelled) setTelegramGateState("needs_telegram");
+        return;
+      }
+
+      if (hasAttemptedTelegramAuth.current) return;
+      hasAttemptedTelegramAuth.current = true;
+
+      clearAuthError();
+      if (!cancelled) setTelegramGateState("verifying");
+
+      try {
+        const success = await verifyTelegram(tg.initData);
+        if (!cancelled) setTelegramGateState(success ? "ready" : "error");
+      } catch {
+        if (!cancelled) setTelegramGateState("error");
+      }
+    }
+
+    void runGate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    telegramGateState,
+    isAuthLoading,
+    isAuthenticated,
+    authUserId,
+    isTelegramAuthenticated,
+    telegramIdentity,
+    clearAuthError,
+    verifyTelegram,
+  ]);
 
   const closeWebApp = React.useCallback(() => {
     const tg = window.Telegram?.WebApp;
@@ -273,6 +370,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     selectedConditions.length > 0 ||
     sortOption !== "newest";
 
+  if (telegramGateState !== "ready") {
+    return (
+      <AuthGateScreen
+        state={telegramGateState}
+        errorMessage={authError}
+        onRetry={retryTelegramAuth}
+      />
+    );
+  }
+
   return (
     <AppContext.Provider
       value={{
@@ -280,7 +387,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         authUserId,
         isAuthLoading,
         isAuthenticated,
-        telegramUserId: telegramIdentity?.telegram_user_id ?? null,
+        isTelegramAuthenticated,
+        customerId: telegramIdentity?.customerId ?? null,
+        telegramUserId: telegramIdentity?.telegramUserId ?? null,
+        telegramUsername: telegramIdentity?.username ?? null,
 
         // Legacy session compat
         sessionId,
