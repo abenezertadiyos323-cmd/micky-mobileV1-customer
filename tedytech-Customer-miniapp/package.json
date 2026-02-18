@@ -1,6 +1,7 @@
 {
   "name": "tedytech-workspace",
   "private": true,
+  "engines": { "node": "20.x" },
   "workspaces": [
     "customer-app"
   ],
