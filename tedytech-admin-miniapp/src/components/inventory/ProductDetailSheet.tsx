@@ -28,8 +28,6 @@ interface ProductFormState {
   inStock: boolean;
 }
 
-const DEFAULT_PRODUCT_IMAGE =
-  "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400";
 const STATUS_OPTIONS: ProductStatus[] = ["active", "draft", "archived"];
 
 function getFormState(product: Product | null): ProductFormState {
@@ -42,6 +40,18 @@ function getFormState(product: Product | null): ProductFormState {
     status: product?.status ?? "active",
     inStock: product?.inStock ?? true,
   };
+}
+
+/* ── Section divider with label ─────────────────────────────── */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 pt-1 pb-0.5">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {children}
+      </span>
+      <div className="flex-1 h-px bg-border" />
+    </div>
+  );
 }
 
 export function ProductDetailSheet({
@@ -77,7 +87,6 @@ export function ProductDetailSheet({
 
   if (!isOpen) return null;
 
-  const imageSrc = form.imageUrl || product?.images?.[0] || DEFAULT_PRODUCT_IMAGE;
   const isAvailable = (product?.status ?? form.status) === "active";
   const isInStock = product ? product.inStock ?? true : form.inStock;
 
@@ -189,175 +198,212 @@ export function ProductDetailSheet({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+  /* ── Shared form fields (create + edit) ──────────────────── */
+  const formContent = (
+    <>
+      {/* ── Essentials ─────────────────────────────────────── */}
+      <SectionLabel>Essentials</SectionLabel>
 
-      {/* Sheet */}
-      <div className="relative w-full max-h-[85vh] bg-background rounded-t-2xl overflow-y-auto animate-slide-up">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        {/* Product Image */}
-        <div className="relative aspect-video bg-muted overflow-hidden">
-          <img
-            src={imageSrc}
-            alt={isCreateMode ? "New product" : product.name}
-            className="w-full h-full object-cover"
+      <div className="space-y-3">
+        {/* Name */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            Name
+          </label>
+          <Input
+            value={form.name}
+            onChange={(e) => setFormField("name", e.target.value)}
+            placeholder="e.g. iPhone 14 Pro Max"
+            disabled={isSaving}
+            className="h-11 text-[15px]"
           />
         </div>
 
-        {/* Product Info */}
-        <div className="p-4 space-y-4">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-3">
-            <h2 className="text-xl font-bold flex-1">
-              {isCreateMode ? "Add Product" : product.name}
-            </h2>
-            <StatusBadge
-              status={isCreateMode ? form.status : product.status}
-              variant="product"
-            />
-          </div>
+        {/* Price */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            Price (ETB)
+          </label>
+          <Input
+            type="number"
+            min={0}
+            value={form.price}
+            onChange={(e) => setFormField("price", e.target.value)}
+            placeholder="0"
+            disabled={isSaving}
+            className="h-11 text-[15px]"
+          />
+        </div>
 
+        {/* Status */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            Status
+          </label>
+          <div className="flex gap-2">
+            {STATUS_OPTIONS.map((status) => (
+              <Button
+                key={status}
+                type="button"
+                size="sm"
+                variant={form.status === status ? "default" : "outline"}
+                onClick={() => setFormField("status", status)}
+                disabled={isSaving}
+                className="flex-1 capitalize h-9"
+              >
+                {status}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* In Stock toggle */}
+        <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3.5 py-3">
+          <span className="text-sm font-medium">In stock</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={form.inStock}
+            onClick={() => setFormField("inStock", !form.inStock)}
+            disabled={isSaving}
+            className={`
+              relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent
+              transition-colors duration-200 ease-in-out
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+              disabled:cursor-not-allowed disabled:opacity-50
+              ${form.inStock ? "bg-primary" : "bg-muted-foreground/30"}
+            `}
+          >
+            <span
+              className={`
+                pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm
+                ring-0 transition-transform duration-200 ease-in-out
+                ${form.inStock ? "translate-x-5" : "translate-x-0"}
+              `}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Optional ───────────────────────────────────────── */}
+      <SectionLabel>Optional</SectionLabel>
+
+      <div className="space-y-3">
+        {/* Image URL */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            Image URL
+          </label>
+          <Input
+            value={form.imageUrl}
+            onChange={(e) => setFormField("imageUrl", e.target.value)}
+            placeholder="https://..."
+            disabled={isSaving}
+            className="h-11 text-[15px]"
+          />
+        </div>
+
+        {/* Description */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            Description
+          </label>
+          <Input
+            value={form.description}
+            onChange={(e) => setFormField("description", e.target.value)}
+            placeholder="Short description (optional)"
+            disabled={isSaving}
+            className="h-11 text-[15px]"
+          />
+        </div>
+
+        {/* Category */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            Category
+          </label>
+          <Input
+            value={form.category}
+            onChange={(e) => setFormField("category", e.target.value)}
+            placeholder="e.g. Smartphones"
+            disabled={isSaving}
+            className="h-11 text-[15px]"
+          />
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={onClose} />
+
+      {/* Sheet — max 85vh, flex column layout for sticky header + footer */}
+      <div
+        className="relative w-full flex flex-col bg-background rounded-t-2xl animate-slide-up"
+        style={{ maxHeight: "85vh" }}
+      >
+        {/* ── Sticky header ─────────────────────────────────── */}
+        <div className="shrink-0 px-5 pt-3 pb-3 border-b border-border">
+          {/* Drag handle */}
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted-foreground/30" />
+
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold leading-tight">
+              {isCreateMode ? "Add Product" : isEditing ? "Edit Product" : product.name}
+            </h2>
+
+            <div className="flex items-center gap-2">
+              {!isCreateMode && (
+                <StatusBadge
+                  status={isEditing ? form.status : product.status}
+                  variant="product"
+                />
+              )}
+              <button
+                onClick={onClose}
+                className="p-1.5 -mr-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Scrollable body ───────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4">
           {error && (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
               {error}
             </div>
           )}
 
           {(isCreateMode || isEditing) && (
-            <Card className="admin-card">
-              <CardContent className="p-4 space-y-3">
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">Name</p>
-                  <Input
-                    value={form.name}
-                    onChange={(e) => setFormField("name", e.target.value)}
-                    placeholder="Product name"
-                    disabled={isSaving}
-                  />
-                </div>
+            <div className="space-y-4">
+              {formContent}
 
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">Price (ETB)</p>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={form.price}
-                    onChange={(e) => setFormField("price", e.target.value)}
-                    placeholder="0"
-                    disabled={isSaving}
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">Category</p>
-                  <Input
-                    value={form.category}
-                    onChange={(e) => setFormField("category", e.target.value)}
-                    placeholder="Optional"
-                    disabled={isSaving}
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">Image URL</p>
-                  <Input
-                    value={form.imageUrl}
-                    onChange={(e) => setFormField("imageUrl", e.target.value)}
-                    placeholder="https://..."
-                    disabled={isSaving}
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">Description</p>
-                  <Input
-                    value={form.description}
-                    onChange={(e) => setFormField("description", e.target.value)}
-                    placeholder="Optional"
-                    disabled={isSaving}
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">Status</p>
-                  <div className="flex flex-wrap gap-2">
-                    {STATUS_OPTIONS.map((status) => (
-                      <Button
-                        key={status}
-                        type="button"
-                        size="sm"
-                        variant={form.status === status ? "default" : "outline"}
-                        onClick={() => setFormField("status", status)}
-                        disabled={isSaving}
-                      >
-                        {status}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between rounded-md border border-border p-3">
-                  <span className="text-sm">In stock</span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={form.inStock ? "default" : "outline"}
-                    onClick={() => setFormField("inStock", !form.inStock)}
-                    disabled={isSaving}
-                  >
-                    {form.inStock ? "Yes" : "No"}
-                  </Button>
-                </div>
-
-                <div className="flex gap-2 pt-1">
-                  {!isCreateMode && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1 min-h-[44px]"
-                      onClick={() => {
-                        setForm(getFormState(product));
-                        setIsEditing(false);
-                        setError(null);
-                      }}
-                      disabled={isSaving}
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                  <Button
-                    type="button"
-                    className="flex-1 min-h-[44px]"
-                    onClick={() => void handleSave()}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                        Saving...
-                      </>
-                    ) : isCreateMode ? (
-                      "Create Product"
-                    ) : (
-                      "Save Changes"
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Cancel button (edit mode only) */}
+              {!isCreateMode && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full text-muted-foreground"
+                  onClick={() => {
+                    setForm(getFormState(product));
+                    setIsEditing(false);
+                    setError(null);
+                  }}
+                  disabled={isSaving}
+                >
+                  Cancel editing
+                </Button>
+              )}
+            </div>
           )}
 
           {!isCreateMode && !isEditing && (
-            <>
+            <div className="space-y-4">
               {/* Price */}
               <p className="text-2xl font-bold text-primary">
                 {formatPrice(product.price)}
@@ -434,13 +480,6 @@ export function ProductDetailSheet({
               </Card>
 
               <div className="space-y-2">
-                <Button
-                  className="w-full min-h-[44px]"
-                  onClick={() => setIsEditing(true)}
-                  disabled={isToggling}
-                >
-                  Edit Product
-                </Button>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
@@ -472,11 +511,42 @@ export function ProductDetailSheet({
                   </Button>
                 </div>
               </div>
-            </>
+            </div>
           )}
+        </div>
 
-          {/* Spacer for bottom safe area */}
-          <div className="h-4" />
+        {/* ── Sticky footer ─────────────────────────────────── */}
+        <div
+          className="shrink-0 border-t border-border bg-background px-5 pt-3"
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0.75rem))" }}
+        >
+          {(isCreateMode || isEditing) ? (
+            <Button
+              type="button"
+              className="w-full h-12 text-[15px] font-semibold rounded-xl"
+              onClick={() => void handleSave()}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : isCreateMode ? (
+                "Create Product"
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          ) : (
+            <Button
+              className="w-full h-12 text-[15px] font-semibold rounded-xl"
+              onClick={() => setIsEditing(true)}
+              disabled={isToggling}
+            >
+              Edit Product
+            </Button>
+          )}
         </div>
       </div>
     </div>
