@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
+  "installCommand": "cd customer-app && npm ci --include=dev",
+  "buildCommand": "cd customer-app && npm run build",
+  "outputDirectory": "customer-app/dist",
   "framework": "vite"
 }
