@@ -23,6 +23,11 @@ type TelegramGateState =
   | "error"
   | "ready";
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
 function AuthGateScreen({
   state,
   errorMessage,
@@ -187,17 +192,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [telegramGateState, setTelegramGateState] =
     React.useState<TelegramGateState>("loading");
   const hasAttemptedTelegramAuth = React.useRef(false);
+  const setGateState = useCallback((next: TelegramGateState) => {
+    setTelegramGateState((current) => {
+      if (current !== next) {
+        console.info(`[AuthGate] state=${next}`);
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    console.info(`[AuthGate] state=${telegramGateState}`);
+  }, []);
 
   const retryTelegramAuth = useCallback(() => {
     clearAuthError();
     hasAttemptedTelegramAuth.current = false;
     const tg = window.Telegram?.WebApp;
     if (!tg?.initData) {
-      setTelegramGateState("needs_telegram");
+      setGateState("needs_telegram");
       return;
     }
-    setTelegramGateState("loading");
-  }, [clearAuthError]);
+    setGateState("loading");
+  }, [clearAuthError, setGateState]);
 
   // Initialize Telegram WebApp: lifecycle, theme, main button.
   useEffect(() => {
@@ -205,12 +222,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const tg = window.Telegram?.WebApp;
       if (!tg?.initData) {
         setIsInTelegram(false);
-        setTelegramGateState("needs_telegram");
+        setGateState("needs_telegram");
         return;
       }
 
       setIsInTelegram(true);
-      setTelegramGateState("loading");
+      setGateState("loading");
 
       // Basic lifecycle
       tg.ready?.();
@@ -245,14 +262,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
             tp.button_text_color,
           );
       }
-    } catch {
-      setTelegramGateState("error");
+    } catch (error) {
+      console.error(`[AuthGate] init error: ${getErrorMessage(error)}`);
+      setGateState("error");
     }
 
     return () => {
       // no teardown required for ready/expand
     };
-  }, []);
+  }, [setGateState]);
 
   // Verify Telegram initData with backend once the anonymous session is ready.
   useEffect(() => {
@@ -263,18 +281,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (isAuthLoading) return;
 
       if (!isAuthenticated || !authUserId) {
-        if (!cancelled) setTelegramGateState("error");
+        if (!cancelled) setGateState("error");
         return;
       }
 
       if (isTelegramAuthenticated && telegramIdentity) {
-        if (!cancelled) setTelegramGateState("ready");
+        if (!cancelled) setGateState("ready");
         return;
       }
 
       const tg = window.Telegram?.WebApp;
       if (!tg?.initData) {
-        if (!cancelled) setTelegramGateState("needs_telegram");
+        if (!cancelled) setGateState("needs_telegram");
         return;
       }
 
@@ -282,13 +300,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hasAttemptedTelegramAuth.current = true;
 
       clearAuthError();
-      if (!cancelled) setTelegramGateState("verifying");
+      if (!cancelled) setGateState("verifying");
 
       try {
         const success = await verifyTelegram(tg.initData);
-        if (!cancelled) setTelegramGateState(success ? "ready" : "error");
-      } catch {
-        if (!cancelled) setTelegramGateState("error");
+        if (!cancelled) setGateState(success ? "ready" : "error");
+      } catch (error) {
+        console.error(`[AuthGate] verify error: ${getErrorMessage(error)}`);
+        if (!cancelled) setGateState("error");
       }
     }
 
@@ -305,6 +324,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isTelegramAuthenticated,
     telegramIdentity,
     clearAuthError,
+    setGateState,
     verifyTelegram,
   ]);
 
@@ -328,8 +348,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         main.offClick?.(handler);
         main.hide?.();
       };
-    } catch (e) {
-      console.warn("[Telegram] MainButton setup failed", e);
+    } catch (error) {
+      console.warn(
+        `[AuthGate] MainButton error: ${getErrorMessage(error)}`,
+      );
     }
   }, [closeWebApp]);
 
