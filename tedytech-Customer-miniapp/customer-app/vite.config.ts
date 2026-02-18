@@ -20,9 +20,9 @@ export default defineConfig(async ({ mode }) => {
       host: "::",
       port: 8080,
       fs: {
-        // Restrict Vite file serving to only the generated convex client and local node_modules
+        // Restrict Vite file serving to this app's generated convex client and local node_modules
         allow: [
-          path.resolve(__dirname, "../../convex/_generated"),
+          path.resolve(__dirname, "./src/convex_generated"),
           path.resolve(__dirname, "node_modules"),
         ],
       },
@@ -31,8 +31,8 @@ export default defineConfig(async ({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
-        // Alias to the shared convex generated client in the repo root
-        convex_generated: path.resolve(__dirname, "../../convex/_generated"),
+        // Alias to the local generated convex client copied during prebuild
+        convex_generated: path.resolve(__dirname, "./src/convex_generated"),
       },
     },
   };
