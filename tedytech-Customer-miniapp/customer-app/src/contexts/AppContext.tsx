@@ -161,7 +161,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const isSessionLoading = isAuthLoading;
 
   // Favorites from Supabase (using sessionId for backwards compat)
-  const { data: favorites = [] } = useFavorites(sessionId);
+  // Guard: only subscribe once Telegram auth is verified to prevent premature query
+  const { data: favorites = [] } = useFavorites(
+    isTelegramAuthenticated && sessionId ? sessionId : null
+  );
   const addFavorite = useAddFavorite(sessionId);
   const removeFavorite = useRemoveFavorite(sessionId);
 
