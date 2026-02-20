@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { useQuery } from "convex/react";
-import { api } from "@/convex_generated/api";
 
 /** Active when running on localhost OR ?debug=1 query param is present. */
 function isDebugMode(): boolean {
@@ -14,37 +12,114 @@ const CONVEX_URL_DISPLAY = CONVEX_URL
   ? `${CONVEX_URL.slice(0, 20)}***`
   : "(not set)";
 
-function fmt(value: unknown): string {
-  if (value === undefined) return "loading…";
-  if (value === null) return "null ✅";
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type QState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: unknown }
+  | {
+      status: "error";
+      message: string;
+      stackLines: string[];
+      requestId: string | null;
+    };
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function extractRequestId(text: string): string | null {
+  const m = text.match(/\[Request ID:\s*([a-f0-9]+)\]/i);
+  return m ? m[1] : null;
+}
+
+function firstNLines(s: string, n: number): string[] {
+  return s.split("\n").slice(0, n).filter(Boolean);
+}
+
+/**
+ * Call Convex HTTP query API imperatively.
+ * Using fetch (not useQuery) so we can try/catch every error.
+ */
+async function callConvexQuery(
+  args: Record<string, unknown>,
+): Promise<QState> {
+  if (!CONVEX_URL) {
+    return {
+      status: "error",
+      message: "VITE_CONVEX_URL is not set — cannot reach Convex.",
+      stackLines: [],
+      requestId: null,
+    };
+  }
   try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
+    const res = await fetch(`${CONVEX_URL}/api/query`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        path: "affiliates:getAffiliateByCustomerId",
+        args,
+        format: "json",
+      }),
+    });
+    const json = (await res.json()) as {
+      status?: string;
+      value?: unknown;
+      errorMessage?: string;
+      errorData?: { stack?: string } | null;
+    };
+
+    if (json.status === "success") {
+      return { status: "success", data: json.value ?? null };
+    }
+
+    // Convex returns status:"error" with errorMessage
+    const msg = String(json.errorMessage ?? "Unknown Convex error");
+    const requestId = extractRequestId(msg);
+    const rawStack = json.errorData?.stack ?? "";
+    const stackLines =
+      rawStack
+        ? firstNLines(rawStack, 5)
+        : firstNLines(msg, 5);
+    return { status: "error", message: msg, stackLines, requestId };
+  } catch (e) {
+    const err = e instanceof Error ? e : new Error(String(e));
+    return {
+      status: "error",
+      message: err.message,
+      stackLines: firstNLines(err.stack ?? "", 5),
+      requestId: extractRequestId(err.message),
+    };
   }
 }
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export function DebugPanel() {
-  const debug = isDebugMode();
   const [open, setOpen] = useState(true);
-  const [runNoArgs, setRunNoArgs] = useState(false);
-  const [runWithId, setRunWithId] = useState(false);
+  const [stateA, setStateA] = useState<QState>({ status: "idle" });
+  const [stateB, setStateB] = useState<QState>({ status: "idle" });
 
-  // Hooks always run; skip=false only when debug is active and user clicked
-  const noArgsResult = useQuery(
-    api.affiliates.getAffiliateByCustomerId,
-    debug && runNoArgs ? {} : "skip",
-  );
-  const withIdResult = useQuery(
-    api.affiliates.getAffiliateByCustomerId,
-    debug && runWithId ? { customerId: "test-user-123" } : "skip",
-  );
-
-  if (!debug) return null;
+  if (!isDebugMode()) return null;
 
   const tgAvailable = Boolean(
     (window as { Telegram?: { WebApp?: unknown } }).Telegram?.WebApp,
   );
+
+  async function runA() {
+    setStateA({ status: "loading" });
+    setStateA(await callConvexQuery({}));
+  }
+
+  async function runB() {
+    setStateB({ status: "loading" });
+    setStateB(await callConvexQuery({ customerId: "test-user-123" }));
+  }
 
   if (!open) {
     return (
@@ -79,7 +154,7 @@ export function DebugPanel() {
         right: 0,
         bottom: 0,
         zIndex: 9999,
-        background: "rgba(0,0,0,0.85)",
+        background: "rgba(0,0,0,0.9)",
         overflowY: "auto",
         padding: "16px 12px 80px",
         fontFamily: "monospace",
@@ -88,109 +163,171 @@ export function DebugPanel() {
       }}
     >
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 12,
+        }}
+      >
         <span style={{ color: "#00d4ff", fontWeight: 700, fontSize: 13 }}>
           ⚙ CONVEX DEBUG PANEL
         </span>
-        <button
-          onClick={() => setOpen(false)}
-          style={{
-            background: "none",
-            border: "1px solid #555",
-            color: "#aaa",
-            borderRadius: 4,
-            padding: "2px 8px",
-            cursor: "pointer",
-            fontSize: 11,
-          }}
-        >
+        <button onClick={() => setOpen(false)} style={miniBtnStyle}>
           minimize
         </button>
       </div>
 
-      {/* Environment info */}
+      {/* Environment rows */}
       <Row label="window.location.href" value={window.location.href} />
-      <Row label="window.Telegram?.WebApp" value={String(tgAvailable)} highlight={!tgAvailable ? "warn" : "ok"} />
-      <Row label="VITE_CONVEX_URL (first 20)" value={CONVEX_URL_DISPLAY} highlight={CONVEX_URL ? "ok" : "error"} />
+      <Row
+        label="window.Telegram?.WebApp"
+        value={String(tgAvailable)}
+        highlight={tgAvailable ? "ok" : "warn"}
+      />
+      <Row
+        label="VITE_CONVEX_URL (first 20)"
+        value={CONVEX_URL_DISPLAY}
+        highlight={CONVEX_URL ? "ok" : "error"}
+      />
 
-      <hr style={{ border: "none", borderTop: "1px solid #333", margin: "12px 0" }} />
+      <Divider />
 
-      {/* Query tests */}
-      <div style={{ color: "#94a3b8", marginBottom: 8, fontSize: 11 }}>
-        AFFILIATE QUERY TESTS
-      </div>
+      <SectionLabel>AFFILIATE QUERY TESTS</SectionLabel>
 
-      {/* Test A: no customerId */}
-      <div style={{ marginBottom: 12, background: "#0f172a", borderRadius: 6, padding: 10 }}>
-        <div style={{ color: "#64748b", marginBottom: 6, fontSize: 11 }}>
-          A) getAffiliateByCustomerId( {} )
-        </div>
-        <div style={{ marginBottom: 6 }}>
-          <span style={{ color: "#94a3b8" }}>result: </span>
-          <span style={{ color: noArgsResult === null ? "#4ade80" : noArgsResult === undefined && runNoArgs ? "#fbbf24" : "#94a3b8" }}>
-            {runNoArgs ? fmt(noArgsResult) : "(not run yet)"}
-          </span>
-        </div>
-        <button
-          onClick={() => setRunNoArgs(true)}
-          disabled={runNoArgs}
-          style={btnStyle(runNoArgs)}
+      <TestBlock
+        label='A) getAffiliateByCustomerId( {} )'
+        state={stateA}
+        onRun={runA}
+      />
+
+      <TestBlock
+        label='B) getAffiliateByCustomerId( { customerId: "test-user-123" } )'
+        state={stateB}
+        onRun={runB}
+      />
+
+      {/* Summary */}
+      {(stateA.status !== "idle" || stateB.status !== "idle") && (
+        <div
+          style={{
+            marginTop: 8,
+            padding: 10,
+            background: "#0f172a",
+            borderRadius: 6,
+          }}
         >
-          {runNoArgs ? "running…" : "Run test A"}
-        </button>
+          <SectionLabel>SUMMARY</SectionLabel>
+          <SummaryLine label="A" state={stateA} />
+          <SummaryLine label="B" state={stateB} />
+        </div>
+      )}
+
+      <Divider />
+      <div style={{ color: "#475569", fontSize: 10 }}>
+        Remove ?debug=1 from URL to hide this panel.
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+function TestBlock({
+  label,
+  state,
+  onRun,
+}: {
+  label: string;
+  state: QState;
+  onRun: () => void;
+}) {
+  const busy = state.status === "loading";
+  return (
+    <div
+      style={{
+        marginBottom: 12,
+        background: "#0f172a",
+        borderRadius: 6,
+        padding: 10,
+      }}
+    >
+      <div style={{ color: "#64748b", marginBottom: 6, fontSize: 11 }}>
+        {label}
       </div>
 
-      {/* Test B: customerId = test-user-123 */}
-      <div style={{ marginBottom: 12, background: "#0f172a", borderRadius: 6, padding: 10 }}>
-        <div style={{ color: "#64748b", marginBottom: 6, fontSize: 11 }}>
-          B) getAffiliateByCustomerId( &#123; customerId: "test-user-123" &#125; )
+      {state.status === "idle" && (
+        <div style={{ color: "#475569", marginBottom: 6 }}>
+          (not run yet)
         </div>
+      )}
+
+      {state.status === "loading" && (
+        <div style={{ color: "#fbbf24", marginBottom: 6 }}>loading…</div>
+      )}
+
+      {state.status === "success" && (
+        <div style={{ color: "#4ade80", marginBottom: 6, wordBreak: "break-all" }}>
+          result: {state.data === null ? "null ✅" : JSON.stringify(state.data)}
+        </div>
+      )}
+
+      {state.status === "error" && (
         <div style={{ marginBottom: 6 }}>
-          <span style={{ color: "#94a3b8" }}>result: </span>
-          <span style={{ color: withIdResult === null ? "#4ade80" : withIdResult === undefined && runWithId ? "#fbbf24" : "#94a3b8" }}>
-            {runWithId ? fmt(withIdResult) : "(not run yet)"}
-          </span>
-        </div>
-        <button
-          onClick={() => setRunWithId(true)}
-          disabled={runWithId}
-          style={btnStyle(runWithId)}
-        >
-          {runWithId ? "running…" : "Run test B"}
-        </button>
-      </div>
-
-      {/* Pass/fail summary */}
-      {(runNoArgs || runWithId) && (
-        <div style={{ marginTop: 8, padding: 10, background: "#0f172a", borderRadius: 6 }}>
-          <div style={{ color: "#94a3b8", fontSize: 11, marginBottom: 4 }}>SUMMARY</div>
-          {runNoArgs && (
-            <div>
-              A:{" "}
-              {noArgsResult === undefined
-                ? "⏳ pending"
-                : noArgsResult === null
-                ? "✅ PASS — returned null"
-                : "❌ FAIL — returned non-null: " + fmt(noArgsResult)}
+          <div style={{ color: "#f87171", marginBottom: 4 }}>
+            ❌ error: {state.message}
+          </div>
+          {state.requestId && (
+            <div style={{ color: "#fbbf24", marginBottom: 4 }}>
+              Request ID: {state.requestId}
             </div>
           )}
-          {runWithId && (
-            <div>
-              B:{" "}
-              {withIdResult === undefined
-                ? "⏳ pending"
-                : withIdResult === null
-                ? "✅ PASS — returned null"
-                : "✅ PASS — returned object (user exists)"}
-            </div>
+          {state.stackLines.length > 0 && (
+            <pre
+              style={{
+                color: "#94a3b8",
+                fontSize: 10,
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-all",
+                margin: 0,
+                background: "#020617",
+                padding: 6,
+                borderRadius: 4,
+              }}
+            >
+              {state.stackLines.join("\n")}
+            </pre>
           )}
         </div>
       )}
 
-      <hr style={{ border: "none", borderTop: "1px solid #333", margin: "12px 0" }} />
-      <div style={{ color: "#475569", fontSize: 10 }}>
-        Remove ?debug=1 from URL to hide this panel.
-      </div>
+      <button
+        onClick={onRun}
+        disabled={busy}
+        style={btnStyle(busy)}
+      >
+        {busy ? "running…" : state.status !== "idle" ? "Re-run" : "Run"}
+      </button>
+    </div>
+  );
+}
+
+function SummaryLine({ label, state }: { label: string; state: QState }) {
+  if (state.status === "idle") return null;
+  const text =
+    state.status === "loading"
+      ? "⏳ pending"
+      : state.status === "success"
+      ? state.data === null
+        ? "✅ PASS — null"
+        : "✅ PASS — " + JSON.stringify(state.data)
+      : "❌ FAIL — " + state.message.slice(0, 80);
+  return (
+    <div style={{ marginBottom: 2 }}>
+      {label}: {text}
     </div>
   );
 }
@@ -219,6 +356,37 @@ function Row({
     </div>
   );
 }
+
+function Divider() {
+  return (
+    <hr
+      style={{ border: "none", borderTop: "1px solid #333", margin: "12px 0" }}
+    />
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ color: "#94a3b8", marginBottom: 8, fontSize: 11 }}>
+      {children}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+const miniBtnStyle: React.CSSProperties = {
+  background: "none",
+  border: "1px solid #555",
+  color: "#aaa",
+  borderRadius: 4,
+  padding: "2px 8px",
+  cursor: "pointer",
+  fontSize: 11,
+  fontFamily: "monospace",
+};
 
 function btnStyle(disabled: boolean): React.CSSProperties {
   return {
