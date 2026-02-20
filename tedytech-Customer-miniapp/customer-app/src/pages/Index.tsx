@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense } from 'react';
 import { BottomNavigation } from '@/components/BottomNavigation';
+import { DebugPanel } from '@/components/DebugPanel';
 import { cn } from '@/lib/utils';
 // Lazy load tab components to reduce initial bundle size
 const HomeTab = lazy(() => import('@/components/tabs/HomeTab').then(m => ({ default: m.HomeTab })));
@@ -68,6 +69,9 @@ const Index = () => {
 
       {/* Bottom Navigation */}
       <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+
+      {/* Runtime debug panel — only visible on localhost or ?debug=1 */}
+      <DebugPanel />
     </div>
   );
 };
