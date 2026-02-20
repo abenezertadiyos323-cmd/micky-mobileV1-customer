@@ -1,11 +1,18 @@
-import { useState, useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { lazy, Suspense, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "./contexts/AppContext";
 import Index from "./pages/Index";
+
+// Lazy-load toast providers — they are never visible on first paint,
+// so keeping them out of the main chunk reduces blocking parse time.
+const Toaster = lazy(() =>
+  import("@/components/ui/toaster").then((m) => ({ default: m.Toaster })),
+);
+const SonnerToaster = lazy(() =>
+  import("@/components/ui/sonner").then((m) => ({ default: m.Toaster })),
+);
 
 const queryClient = new QueryClient();
 // Always use HashRouter: works in Telegram WebViews and regular browsers.
@@ -28,18 +35,17 @@ function HashNormalizer() {
 }
 
 const App = () => {
-  // Guard against the brief 404 flash that occurs when the router renders
-  // before React state stabilises on first mount.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  if (!mounted) return null;
-
   return (
     <QueryClientProvider client={queryClient}>
       <AppProvider>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
+          {/* Toast providers are lazy — they carry sonner + next-themes which
+              are never needed on first paint. Suspense fallback=null is safe
+              because they render no visible content until a toast fires. */}
+          <Suspense fallback={null}>
+            <Toaster />
+            <SonnerToaster />
+          </Suspense>
           <Router>
             {/* Normalise hash to "/" before any route renders */}
             <HashNormalizer />

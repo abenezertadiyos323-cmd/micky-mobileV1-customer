@@ -35,5 +35,20 @@ export default defineConfig(async ({ mode }) => {
         convex_generated: path.resolve(__dirname, "./src/convex_generated"),
       },
     },
+    build: {
+      // Telegram WebView is always Chromium — target modern syntax for smaller output.
+      target: "es2020",
+      rollupOptions: {
+        output: {
+          // Split stable vendor code into separate chunks.
+          // These change rarely between deploys so they stay cached on repeat visits.
+          manualChunks: {
+            "vendor-react": ["react", "react-dom", "react-router-dom"],
+            "vendor-convex": ["convex"],
+            "vendor-query": ["@tanstack/react-query"],
+          },
+        },
+      },
+    },
   };
 });

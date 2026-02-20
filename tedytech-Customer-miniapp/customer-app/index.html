@@ -32,7 +32,9 @@
       name="twitter:image"
       content="https://lovable.dev/opengraph-image-p98pqg.png"
     />
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- defer keeps this non-render-blocking; module scripts are also deferred,
+         so DOM order still guarantees this executes before main.tsx -->
+    <script defer src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
 
   <body>
