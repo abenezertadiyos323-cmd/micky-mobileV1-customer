@@ -7,13 +7,13 @@ import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
 
 export function EarnTab() {
-  const { isAuthenticated, isAuthLoading, authUserId } = useApp();
-  const { stats, hasAffiliate, isLoading: affiliateLoading, error: affiliateError } = useAffiliate();
+  const { isAuthenticated, isAuthLoading, authUserId, verifiedCustomerId } = useApp();
+  const { stats, hasAffiliate, isLoading: affiliateLoading, error: affiliateError, canUseAffiliate } = useAffiliate();
   const createAffiliate = useCreateAffiliate();
   const [hasTriedCreate, setHasTriedCreate] = useState(false);
 
   // Derived loading state
-  const isLoading = isAuthLoading || (affiliateLoading && isAuthenticated && !!authUserId && !hasAffiliate);
+  const isLoading = isAuthLoading || (canUseAffiliate && affiliateLoading && isAuthenticated && !!authUserId && !hasAffiliate);
 
 
   // Auto-create affiliate when authenticated user visits Earn tab
@@ -23,6 +23,9 @@ export function EarnTab() {
     
     // Don't attempt if not authenticated
     if (!isAuthenticated || !authUserId) return;
+
+    // Don't attempt if Telegram verification hasn't produced a customer id yet
+    if (!verifiedCustomerId || !canUseAffiliate) return;
     
     // Don't attempt if already has affiliate or already tried
     if (hasAffiliate || hasTriedCreate) return;
@@ -34,7 +37,7 @@ export function EarnTab() {
     createAffiliate.mutate().catch(() => {
       toast.error('Failed to join affiliate program');
     });
-  }, [isAuthenticated, authUserId, hasAffiliate, hasTriedCreate, isAuthLoading, createAffiliate]);
+  }, [isAuthenticated, authUserId, verifiedCustomerId, canUseAffiliate, hasAffiliate, hasTriedCreate, isAuthLoading, createAffiliate]);
 
   // Reset hasTriedCreate when authUserId changes
   useEffect(() => {
@@ -103,6 +106,24 @@ export function EarnTab() {
           <h2 className="text-lg font-semibold text-foreground">Connection Error</h2>
           <p className="text-sm text-muted-foreground max-w-xs">
             Unable to connect to the affiliate program. Please try refreshing the page.
+          </p>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Refresh Page
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Verified customer id is required before affiliate query can run.
+  if (!isAuthLoading && isAuthenticated && (!verifiedCustomerId || !canUseAffiliate)) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto" />
+          <h2 className="text-lg font-semibold text-foreground">Setup Required</h2>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            Please reopen from the bot and try again
           </p>
           <Button onClick={() => window.location.reload()} variant="outline">
             Refresh Page

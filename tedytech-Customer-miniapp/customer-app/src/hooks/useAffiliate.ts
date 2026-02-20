@@ -39,9 +39,14 @@ interface AffiliateStats {
  * Relies on RLS policies (auth.uid() = customer_id) for security.
  */
 export function useAffiliate() {
-  const { authUserId, isAuthenticated, isAuthLoading } = useApp();
-  const customerId = authUserId;
-  const affiliateEnabled = isAuthenticated && !!authUserId && !isAuthLoading;
+  const { verifiedCustomerId, telegramUser, isAuthLoading } = useApp();
+  const initData =
+    (
+      window as { Telegram?: { WebApp?: { initData?: string } } }
+    ).Telegram?.WebApp?.initData ?? "";
+  const hasTelegramEvidence = initData.trim().length > 0 || Boolean(telegramUser);
+  const customerId =
+    verifiedCustomerId && hasTelegramEvidence ? verifiedCustomerId : null;
   const affiliateData = useConvexQuery(
     api.affiliates.getAffiliateByCustomerId,
     customerId ? { customerId } : "skip",
@@ -50,7 +55,7 @@ export function useAffiliate() {
 
   const commissionsData = useConvexQuery(
     api.affiliates.listAffiliateCommissions,
-    affiliate?._id ? { affiliateId: affiliate._id } : (undefined as any),
+    affiliate?._id ? { affiliateId: affiliate._id } : "skip",
   );
   const commissions = commissionsData ?? [];
 
@@ -70,8 +75,8 @@ export function useAffiliate() {
   };
   const isLoading =
     isAuthLoading ||
-    affiliateData === undefined ||
-    commissionsData === undefined;
+    (customerId !== null &&
+      (affiliateData === undefined || commissionsData === undefined));
 
   return {
     affiliate,
@@ -80,6 +85,7 @@ export function useAffiliate() {
     isLoading,
     error: null,
     hasAffiliate: !!affiliate,
+    canUseAffiliate: customerId !== null,
   };
 }
 
@@ -88,15 +94,20 @@ export function useAffiliate() {
  * Uses RPC to safely generate referral code.
  */
 export function useCreateAffiliate() {
-  const { authUserId } = useApp();
+  const { verifiedCustomerId, telegramUser } = useApp();
   const mutation = useConvexMutation(api.affiliates.createAffiliateIfNotExists);
+  const initData =
+    (
+      window as { Telegram?: { WebApp?: { initData?: string } } }
+    ).Telegram?.WebApp?.initData ?? "";
+  const hasTelegramEvidence = initData.trim().length > 0 || Boolean(telegramUser);
 
   return {
     mutate: async () => {
-      if (!authUserId)
+      if (!verifiedCustomerId || !hasTelegramEvidence)
         throw new Error("Must be authenticated to create affiliate");
       try {
-        await mutation({ customerId: authUserId });
+        await mutation({ customerId: verifiedCustomerId });
         return true;
       } catch (e) {
         console.error("[Affiliate] Error creating:", e);
