@@ -1,27 +1,24 @@
 import {
   useQuery as useConvexQuery,
   useMutation as useConvexMutation,
-  useQuery as _unused,
 } from "convex/react";
+import { useState } from "react";
 import { api } from "@/convex_generated/api";
 import { useApp } from "@/contexts/AppContext";
 
-interface Affiliate {
-  id: string;
-  customer_id: string;
-  referral_code: string;
-  created_at: string;
-}
-
-interface AffiliateCommission {
-  id: string;
-  affiliate_id: string;
-  order_id: string;
-  order_amount: number;
-  commission_percent: number;
-  commission_amount: number;
+// ---------------------------------------------------------------------------
+// Runtime shape of affiliateCommissions rows from Convex.
+// Schema uses camelCase — these MUST match convex/schema.ts exactly.
+// ---------------------------------------------------------------------------
+interface ConvexCommission {
+  _id: string;
+  affiliateId: string;
+  orderId?: string;
+  orderAmount: number;
+  commissionPercent: number;
+  commissionAmount: number; // camelCase — matches schema.ts
   status: string;
-  created_at: string;
+  createdAt: number;
 }
 
 interface AffiliateStats {
@@ -35,8 +32,6 @@ interface AffiliateStats {
 
 /**
  * Hook to fetch affiliate data for the authenticated user.
- * Uses authUserId from AppContext to avoid duplicate auth state.
- * Relies on RLS policies (auth.uid() = customer_id) for security.
  */
 export function useAffiliate() {
   const { verifiedCustomerId, telegramUser, isAuthLoading } = useApp();
@@ -47,6 +42,7 @@ export function useAffiliate() {
   const hasTelegramEvidence = initData.trim().length > 0 || Boolean(telegramUser);
   const customerId =
     verifiedCustomerId && hasTelegramEvidence ? verifiedCustomerId : null;
+
   const affiliateData = useConvexQuery(
     api.affiliates.getAffiliateByCustomerId,
     customerId ? { customerId } : "skip",
@@ -57,22 +53,29 @@ export function useAffiliate() {
     api.affiliates.listAffiliateCommissions,
     affiliate?._id ? { affiliateId: affiliate._id } : "skip",
   );
-  const commissions = commissionsData ?? [];
+  // Cast to the runtime camelCase shape that Convex actually returns.
+  const commissions = (commissionsData ?? []) as ConvexCommission[];
 
-  // Compute stats from commissions
+  const safeNum = (v: unknown): number =>
+    typeof v === "number" && isFinite(v) ? v : 0;
+
   const stats: AffiliateStats = {
     referralCode: affiliate?.referralCode ?? null,
-    commissionPercent: 5, // Default commission rate
-    totalEarnings: commissions.reduce((sum, c) => sum + c.commission_amount, 0),
+    commissionPercent: 5,
+    totalEarnings: commissions.reduce(
+      (sum, c) => sum + safeNum(c.commissionAmount),
+      0,
+    ),
     pendingEarnings: commissions
       .filter((c) => c.status === "pending")
-      .reduce((sum, c) => sum + c.commission_amount, 0),
+      .reduce((sum, c) => sum + safeNum(c.commissionAmount), 0),
     paidEarnings: commissions
       .filter((c) => c.status === "paid")
-      .reduce((sum, c) => sum + c.commission_amount, 0),
+      .reduce((sum, c) => sum + safeNum(c.commissionAmount), 0),
     successfulReferrals: commissions.filter((c) => c.status !== "cancelled")
       .length,
   };
+
   const isLoading =
     isAuthLoading ||
     (customerId !== null &&
@@ -91,11 +94,12 @@ export function useAffiliate() {
 
 /**
  * Hook to create an affiliate record for the authenticated user.
- * Uses RPC to safely generate referral code.
+ * Tracks isPending so callers can gate loading UI correctly.
  */
 export function useCreateAffiliate() {
   const { verifiedCustomerId, telegramUser } = useApp();
   const mutation = useConvexMutation(api.affiliates.createAffiliateIfNotExists);
+  const [isPending, setIsPending] = useState(false);
   const initData =
     (
       window as { Telegram?: { WebApp?: { initData?: string } } }
@@ -103,15 +107,19 @@ export function useCreateAffiliate() {
   const hasTelegramEvidence = initData.trim().length > 0 || Boolean(telegramUser);
 
   return {
+    isPending,
     mutate: async () => {
       if (!verifiedCustomerId || !hasTelegramEvidence)
         throw new Error("Must be authenticated to create affiliate");
+      setIsPending(true);
       try {
         await mutation({ customerId: verifiedCustomerId });
         return true;
       } catch (e) {
         console.error("[Affiliate] Error creating:", e);
         throw e;
+      } finally {
+        setIsPending(false);
       }
     },
   };
