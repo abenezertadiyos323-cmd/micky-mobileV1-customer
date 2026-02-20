@@ -2,21 +2,17 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const getAffiliateByCustomerId = query({
-  args: { customerId: v.string() },
+  args: { customerId: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const customerId = args.customerId.trim();
+    const customerId = args.customerId?.trim();
     if (!customerId) return null;
 
-    try {
-      const a = await ctx.db
-        .query("affiliates")
-        .filter((q) => q.eq(q.field("customerId"), customerId))
-        .order("createdAt", "desc")
-        .first();
-      return a ?? null;
-    } catch {
-      return null;
-    }
+    const a = await ctx.db
+      .query("affiliates")
+      .withIndex("by_customerId", (q) => q.eq("customerId", customerId))
+      .order("desc")
+      .first();
+    return a ?? null;
   },
 });
 
@@ -25,8 +21,8 @@ export const listAffiliateCommissions = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("affiliateCommissions")
-      .filter((q) => q.eq(q.field("affiliateId"), args.affiliateId))
-      .order("createdAt", "desc")
+      .withIndex("by_affiliateId", (q) => q.eq("affiliateId", args.affiliateId))
+      .order("desc")
       .collect();
   },
 });
