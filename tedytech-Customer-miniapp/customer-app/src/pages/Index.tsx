@@ -3,13 +3,23 @@ import { BottomNavigation } from '@/components/BottomNavigation';
 import { DebugPanel } from '@/components/DebugPanel';
 import { cn } from '@/lib/utils';
 import { useAffiliate, AffiliateContext } from '@/hooks/useAffiliate';
-// Lazy load tab components to reduce initial bundle size
-const HomeTab = lazy(() => import('@/components/tabs/HomeTab').then(m => ({ default: m.HomeTab })));
-const SavedTab = lazy(() => import('@/components/tabs/SavedTab').then(m => ({ default: m.SavedTab })));
-const ExchangeTab = lazy(() => import('@/components/tabs/ExchangeTab').then(m => ({ default: m.ExchangeTab })));
-const AboutTab = lazy(() => import('@/components/tabs/AboutTab').then(m => ({ default: m.AboutTab })));
-// Hoist the import() so the chunk downloads immediately at app open.
-// lazy() reuses the same in-flight promise — no double fetch.
+
+// Hoist import() at module scope so each chunk starts downloading immediately
+// when the app opens, not on first click. lazy() reuses the same in-flight
+// promise — no double fetch. This is why Earn was already instant.
+const _homeChunk = import('@/components/tabs/HomeTab');
+const HomeTab = lazy(() => _homeChunk.then(m => ({ default: m.HomeTab })));
+
+const _savedChunk = import('@/components/tabs/SavedTab');
+const SavedTab = lazy(() => _savedChunk.then(m => ({ default: m.SavedTab })));
+
+const _exchangeChunk = import('@/components/tabs/ExchangeTab');
+const ExchangeTab = lazy(() => _exchangeChunk.then(m => ({ default: m.ExchangeTab })));
+
+const _aboutChunk = import('@/components/tabs/AboutTab');
+const AboutTab = lazy(() => _aboutChunk.then(m => ({ default: m.AboutTab })));
+
+// Earn was already hoisted — keep the same pattern.
 const _earnChunk = import('@/components/tabs/EarnTab');
 const EarnTab = lazy(() => _earnChunk.then(m => ({ default: m.EarnTab })));
 
