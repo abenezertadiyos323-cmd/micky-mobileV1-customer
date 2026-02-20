@@ -135,14 +135,31 @@ export function useCreateAffiliate() {
 
 export type AffiliateState = ReturnType<typeof useAffiliate>;
 
-export const AffiliateContext = createContext<AffiliateState | null>(null);
+// Static safe fallback: if EarnTab is ever rendered outside the provider
+// (tests, future pages) it receives zero-state data instead of crashing.
+// isLoading:true means EarnTab shows '—' placeholders — same as real
+// first-render before Convex resolves.
+const _affiliateFallback: AffiliateState = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  affiliate: null as any,
+  commissions: [],
+  stats: {
+    totalEarnings: 0,
+    pendingEarnings: 0,
+    paidEarnings: 0,
+    successfulReferrals: 0,
+    commissionPercent: 5,
+    referralCode: null,
+  },
+  isLoading: true,
+  error: null,
+  hasAffiliate: false,
+  canUseAffiliate: false,
+};
 
-/**
- * Consume the affiliate state provided by AffiliateContext.
- * Must be called inside a component rendered under AffiliateContext.Provider.
- */
+export const AffiliateContext = createContext<AffiliateState>(_affiliateFallback);
+
+/** Consume the affiliate state provided by Index.tsx's AffiliateContext.Provider. */
 export function useAffiliateContext(): AffiliateState {
-  const ctx = useContext(AffiliateContext);
-  if (!ctx) throw new Error("useAffiliateContext: missing AffiliateContext.Provider");
-  return ctx;
+  return useContext(AffiliateContext);
 }
