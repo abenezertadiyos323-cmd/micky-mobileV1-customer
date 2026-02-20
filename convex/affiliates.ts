@@ -4,12 +4,19 @@ import { v } from "convex/values";
 export const getAffiliateByCustomerId = query({
   args: { customerId: v.string() },
   handler: async (ctx, args) => {
-    const a = await ctx.db
-      .query("affiliates")
-      .filter((q) => q.eq(q.field("customerId"), args.customerId))
-      .order("createdAt", "desc")
-      .first();
-    return a ?? null;
+    const customerId = args.customerId.trim();
+    if (!customerId) return null;
+
+    try {
+      const a = await ctx.db
+        .query("affiliates")
+        .filter((q) => q.eq(q.field("customerId"), customerId))
+        .order("createdAt", "desc")
+        .first();
+      return a ?? null;
+    } catch {
+      return null;
+    }
   },
 });
 
