@@ -147,7 +147,7 @@ function LoadingScreen() {
 }
 
 // ---------------------------------------------------------------------------
-// Gate screen — only shown as last resort after 1 000 ms timeout
+// Gate screen — only shown as last resort after 3 000 ms timeout
 // ---------------------------------------------------------------------------
 
 function NeedsTelegramScreen() {
@@ -296,13 +296,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     null,
   );
 
-  // ── Telegram detection: poll every 50ms, give up after 1 000ms ──────────
+  // ── Telegram detection: poll every 50ms, give up after 3 000ms ──────────
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     const startMs = Date.now();
-    const MAX_WAIT_MS = 1000;
+    const MAX_WAIT_MS = 3000;
     const POLL_MS = 50;
 
     function applyTheme(tp: TgThemeParams | undefined) {
@@ -326,10 +326,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         const tg = getTgWebApp();
 
-        // Detect presence of the WebApp object — do NOT require initData.
-        // initData may be empty in some Telegram contexts (e.g. preview mode)
-        // while the WebApp object itself is fully available.
-        if (tg) {
+        // Detect presence strictly via Boolean(window.Telegram?.WebApp).
+        // Do not gate detection on initData content.
+        // Empty initData can still happen in valid Telegram contexts.
+        if (Boolean(tg)) {
           debugLog("telegram WebApp detected");
           tg.ready?.();
           tg.expand?.();
@@ -489,7 +489,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Default: show loading immediately (no blank frame)
   if (checkState === "checking") return <LoadingScreen />;
 
-  // Last resort: show gate only after 1000ms timeout
+  // Last resort: show gate only after 3000ms timeout
   if (checkState === "needs_telegram") return <NeedsTelegramScreen />;
 
   // In Telegram — render the full app
@@ -556,3 +556,4 @@ export function useApp() {
   }
   return context;
 }
+

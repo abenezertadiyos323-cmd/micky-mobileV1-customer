@@ -5,53 +5,88 @@ import App from "./App.tsx";
 import "./index.css";
 
 // ---------------------------------------------------------------------------
-// Environment validation — Vite bakes these at build time.
+// Environment validation - Vite bakes these at build time.
 // If VITE_CONVEX_URL is missing the production build will be broken.
 // ---------------------------------------------------------------------------
 const _convexUrl = (import.meta.env.VITE_CONVEX_URL ?? "") as string;
 
-/** Show error ONLY when ?debug=1 or VITE_APP_ENVIRONMENT=dev */
-const _isDebugMode =
-  new URLSearchParams(
-    typeof window !== "undefined" ? window.location.search : "",
-  ).get("debug") === "1" ||
-  (import.meta.env.VITE_APP_ENVIRONMENT as string | undefined) === "dev";
+type RuntimeTgWebApp = {
+  initData?: string;
+};
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function sanitizeCrashMessage(raw: string) {
-  return raw
-    .replace(/initData=[^&\s]+/gi, "initData=[redacted]")
-    .replace(/\b\d{8,}:[A-Za-z0-9_-]{20,}\b/g, "[redacted-token]")
-    .replace(/(token=)[^&\s]+/gi, "$1[redacted]");
+interface CrashInfo {
+  name: string;
+  message: string;
+  stack?: string;
+  locationHref: string;
+  hasTelegramWebApp: boolean;
+  initDataLength: number | null;
 }
 
-function toCrashMessage(error: unknown) {
-  if (error instanceof Error) return sanitizeCrashMessage(error.message);
-  if (typeof error === "string") return sanitizeCrashMessage(error);
-  if (
-    error &&
-    typeof error === "object" &&
-    "message" in error &&
-    typeof (error as { message: unknown }).message === "string"
-  ) {
-    return sanitizeCrashMessage((error as { message: string }).message);
-  }
-  return "Unknown runtime error";
+function getTelegramWebApp(): RuntimeTgWebApp | undefined {
+  if (typeof window === "undefined") return undefined;
+  return (window as { Telegram?: { WebApp?: RuntimeTgWebApp } }).Telegram?.WebApp;
 }
 
-function toCrashDetails(error: unknown): string {
-  if (error instanceof Error) {
-    return `${error.name}: ${error.message}\n${error.stack ?? "(no stack)"}`;
-  }
-  if (typeof error === "string") return error;
+function safeStringify(value: unknown): string {
   try {
-    return JSON.stringify(error, null, 2);
+    return JSON.stringify(value, null, 2);
   } catch {
-    return String(error);
+    return String(value);
   }
+}
+
+function normalizeError(error: unknown): {
+  name: string;
+  message: string;
+  stack?: string;
+} {
+  if (error instanceof Error) {
+    return {
+      name: error.name || "Error",
+      message: error.message || "Unknown runtime error",
+      stack: error.stack,
+    };
+  }
+
+  if (typeof error === "string") {
+    return { name: "Error", message: error };
+  }
+
+  if (error && typeof error === "object") {
+    const candidate = error as {
+      name?: unknown;
+      message?: unknown;
+      stack?: unknown;
+    };
+    const name =
+      typeof candidate.name === "string" && candidate.name.trim()
+        ? candidate.name
+        : "Error";
+    const message =
+      typeof candidate.message === "string" && candidate.message.trim()
+        ? candidate.message
+        : safeStringify(error);
+    const stack = typeof candidate.stack === "string" ? candidate.stack : undefined;
+    return { name, message, stack };
+  }
+
+  return { name: "Error", message: String(error) };
+}
+
+function buildCrashInfo(error: unknown): CrashInfo {
+  const normalized = normalizeError(error);
+  const tg = getTelegramWebApp();
+
+  return {
+    name: normalized.name,
+    message: normalized.message,
+    stack: normalized.stack,
+    locationHref:
+      typeof window !== "undefined" ? window.location.href : "window unavailable",
+    hasTelegramWebApp: Boolean(tg),
+    initDataLength: typeof tg?.initData === "string" ? tg.initData.length : null,
+  };
 }
 
 /** Render a plain-HTML error before React mounts (e.g. missing env var). */
@@ -72,24 +107,29 @@ function renderStaticError(title: string, message: string) {
 // ---------------------------------------------------------------------------
 
 function CrashScreen({
-  message,
-  details,
+  crashInfo,
   onReload,
 }: {
-  message: string;
-  details?: string | null;
+  crashInfo: CrashInfo;
   onReload: () => void;
 }) {
   return (
     <div className="fixed inset-0 z-[9999] bg-background px-6 flex items-center justify-center">
       <div className="w-full max-w-md rounded-2xl border bg-card p-6 text-center">
         <h1 className="text-lg font-semibold">App crashed</h1>
-        <p className="mt-2 text-sm text-muted-foreground break-words">
-          {message}
-        </p>
-        {_isDebugMode && details ? (
+        <div className="mt-3 rounded bg-muted/60 p-3 text-left text-xs break-all space-y-1">
+          <p>error.name: {crashInfo.name}</p>
+          <p>error.message: {crashInfo.message}</p>
+          <p>window.location.href: {crashInfo.locationHref}</p>
+          <p>Boolean(window.Telegram?.WebApp): {String(crashInfo.hasTelegramWebApp)}</p>
+          <p>
+            window.Telegram?.WebApp?.initData length: {" "}
+            {crashInfo.initDataLength === null ? "(missing)" : crashInfo.initDataLength}
+          </p>
+        </div>
+        {crashInfo.stack ? (
           <pre className="mt-3 text-left text-xs bg-muted/60 rounded p-2 overflow-auto max-h-48 whitespace-pre-wrap break-all">
-            {details}
+            {`error.stack:\n${crashInfo.stack}`}
           </pre>
         ) : null}
         <button
@@ -109,21 +149,20 @@ class AppErrorBoundary extends React.Component<
     onCrash: (error: unknown) => void;
     children: React.ReactNode;
   },
-  { hasError: boolean; message: string; details: string }
+  { hasError: boolean; crashInfo: CrashInfo | null }
 > {
   constructor(props: {
     onCrash: (error: unknown) => void;
     children: React.ReactNode;
   }) {
     super(props);
-    this.state = { hasError: false, message: "", details: "" };
+    this.state = { hasError: false, crashInfo: null };
   }
 
   static getDerivedStateFromError(error: unknown) {
     return {
       hasError: true,
-      message: toCrashMessage(error),
-      details: toCrashDetails(error),
+      crashInfo: buildCrashInfo(error),
     };
   }
 
@@ -132,11 +171,10 @@ class AppErrorBoundary extends React.Component<
   }
 
   render() {
-    if (this.state.hasError) {
+    if (this.state.hasError && this.state.crashInfo) {
       return (
         <CrashScreen
-          message={this.state.message}
-          details={this.state.details}
+          crashInfo={this.state.crashInfo}
           onReload={() => window.location.reload()}
         />
       );
@@ -146,15 +184,10 @@ class AppErrorBoundary extends React.Component<
 }
 
 function RootApp() {
-  const [crashInfo, setCrashInfo] = React.useState<{
-    message: string;
-    details: string;
-  } | null>(null);
+  const [crashInfo, setCrashInfo] = React.useState<CrashInfo | null>(null);
 
   const reportCrash = React.useCallback((error: unknown) => {
-    const message = toCrashMessage(error);
-    const details = toCrashDetails(error);
-    setCrashInfo((previous) => previous ?? { message, details });
+    setCrashInfo((previous) => previous ?? buildCrashInfo(error));
   }, []);
 
   React.useEffect(() => {
@@ -162,7 +195,16 @@ function RootApp() {
     const previousOnUnhandledRejection = window.onunhandledrejection;
 
     window.onerror = (message, source, lineno, colno, error) => {
-      reportCrash(error ?? message);
+      if (error) {
+        reportCrash(error);
+      } else {
+        const fallback = new Error(String(message));
+        fallback.name = "WindowError";
+        if (source) {
+          fallback.stack = `${source}:${lineno}:${colno}`;
+        }
+        reportCrash(fallback);
+      }
       if (typeof previousOnError === "function") {
         return previousOnError(message, source, lineno, colno, error);
       }
@@ -184,13 +226,7 @@ function RootApp() {
   }, [reportCrash]);
 
   if (crashInfo) {
-    return (
-      <CrashScreen
-        message={crashInfo.message}
-        details={crashInfo.details}
-        onReload={() => window.location.reload()}
-      />
-    );
+    return <CrashScreen crashInfo={crashInfo} onReload={() => window.location.reload()} />;
   }
 
   return (
@@ -201,7 +237,7 @@ function RootApp() {
 }
 
 // ---------------------------------------------------------------------------
-// Bootstrap — validate env, create client, mount React
+// Bootstrap - validate env, create client, mount React
 // ---------------------------------------------------------------------------
 
 function startApp() {
