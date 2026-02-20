@@ -10,7 +10,6 @@ export const getAffiliateByCustomerId = query({
     const a = await ctx.db
       .query("affiliates")
       .withIndex("by_customerId", (q) => q.eq("customerId", customerId))
-      .order("desc")
       .first();
     return a ?? null;
   },
@@ -22,7 +21,6 @@ export const listAffiliateCommissions = query({
     return await ctx.db
       .query("affiliateCommissions")
       .withIndex("by_affiliateId", (q) => q.eq("affiliateId", args.affiliateId))
-      .order("desc")
       .collect();
   },
 });
