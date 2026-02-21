@@ -100,21 +100,39 @@ export const searchProducts = query({
   handler: async (ctx, args) => {
     const term = (args.term || "").trim();
     const limit = args.limit ?? 24;
+    const status = args.status ?? "active";
 
-    // Use Convex Search Index for ranking and relevance
-    const q = ctx.db
-      .query("products")
-      .withSearchIndex("search_products", (s) => {
-        if (term) s.search("name", term);
-        if (args.category) s.eq("category", args.category);
-        if (args.status) s.eq("status", args.status);
-        else s.eq("status", "active");
-        return s;
-      });
+    let rawResults: any[];
 
-    const results = await q.limit(limit).collect();
+    if (term) {
+      // Pure functional chain — each method consumes its receiver and returns a
+      // fresh SearchFilterBuilderImpl. Never reuse a builder instance.
+      rawResults = await ctx.db
+        .query("products")
+        .withSearchIndex("search_products", (s) =>
+          args.category
+            ? s.search("name", term).eq("status", status).eq("category", args.category)
+            : s.search("name", term).eq("status", status),
+        )
+        .limit(limit)
+        .collect();
+    } else {
+      // No search term: .search() is required to use the search index, so fall
+      // back to a regular filtered query to avoid an illegal empty-term search.
+      rawResults = await ctx.db
+        .query("products")
+        .filter((q) =>
+          args.category
+            ? q.and(
+                q.eq(q.field("status"), status),
+                q.eq(q.field("category"), args.category),
+              )
+            : q.eq(q.field("status"), status),
+        )
+        .take(limit);
+    }
 
-    return results.map((p: any) => ({
+    return rawResults.map((p: any) => ({
       id: p._id,
       name: p.name,
       description: p.description ?? null,

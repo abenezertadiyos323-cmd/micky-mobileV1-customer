@@ -1,16 +1,21 @@
 import { useState } from "react";
+import { useQuery as useConvexQuery } from "convex/react";
+import { api } from "@/convex_generated/api";
 
 /** Active when running on localhost OR ?debug=1 query param is present. */
 function isDebugMode(): boolean {
   if (typeof window === "undefined") return false;
+  const env = (
+    import.meta.env.VITE_APP_ENVIRONMENT ??
+    import.meta.env.MODE ??
+    ""
+  ).toLowerCase();
+  if (env === "production") return false;
   if (window.location.hostname.includes("localhost")) return true;
   return new URLSearchParams(window.location.search).get("debug") === "1";
 }
 
 const CONVEX_URL = (import.meta.env.VITE_CONVEX_URL ?? "") as string;
-const CONVEX_URL_DISPLAY = CONVEX_URL
-  ? `${CONVEX_URL.slice(0, 20)}***`
-  : "(not set)";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -104,12 +109,21 @@ export function DebugPanel() {
   const [open, setOpen] = useState(true);
   const [stateA, setStateA] = useState<QState>({ status: "idle" });
   const [stateB, setStateB] = useState<QState>({ status: "idle" });
+  const products = useConvexQuery(api.products.listAllProducts) as
+    | unknown[]
+    | undefined;
 
   if (!isDebugMode()) return null;
 
   const tgAvailable = Boolean(
     (window as { Telegram?: { WebApp?: unknown } }).Telegram?.WebApp,
   );
+  const productsCount =
+    products === undefined
+      ? "loading"
+      : Array.isArray(products)
+      ? String(products.length)
+      : "n/a";
 
   async function runA() {
     setStateA({ status: "loading" });
@@ -187,9 +201,14 @@ export function DebugPanel() {
         highlight={tgAvailable ? "ok" : "warn"}
       />
       <Row
-        label="VITE_CONVEX_URL (first 20)"
-        value={CONVEX_URL_DISPLAY}
+        label="VITE_CONVEX_URL"
+        value={CONVEX_URL}
         highlight={CONVEX_URL ? "ok" : "error"}
+      />
+      <Row
+        label="products.length (api.products.listAllProducts)"
+        value={productsCount}
+        highlight={productsCount === "loading" ? undefined : "ok"}
       />
 
       <Divider />

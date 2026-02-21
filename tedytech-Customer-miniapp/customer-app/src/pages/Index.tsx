@@ -92,8 +92,8 @@ const Index = () => {
         {/* Bottom Navigation */}
         <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
-        {/* Runtime debug panel — only visible on localhost or ?debug=1 */}
-        <DebugPanel />
+        {/* Runtime debug panel — DEV only; tree-shaken from production bundle */}
+        {import.meta.env.DEV && <DebugPanel />}
       </div>
     </AffiliateContext.Provider>
   );
