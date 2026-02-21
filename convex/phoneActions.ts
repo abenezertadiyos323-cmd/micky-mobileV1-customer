@@ -51,7 +51,7 @@ export const getExchangeRequestsV2 = query({
     return await ctx.db
       .query("exchangeRequests")
       .filter((q) => q.eq(q.field("sessionId"), args.sessionId))
-      .order("createdAt", "desc")
+      .order("desc")
       .collect();
   },
 });

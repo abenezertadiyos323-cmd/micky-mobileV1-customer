@@ -23,7 +23,7 @@ export function useSession() {
 
       // Create new session via Convex mutation
       try {
-        const id = await mutation.mutate();
+        const id = await mutation();
         storedSessionId = id as string;
         localStorage.setItem(SESSION_KEY, storedSessionId);
         setSessionId(storedSessionId);

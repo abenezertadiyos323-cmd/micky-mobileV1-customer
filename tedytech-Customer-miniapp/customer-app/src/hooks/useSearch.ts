@@ -31,7 +31,7 @@ export function useLogSearch(sessionId: string | null) {
       if (!sessionId || !term.trim()) return;
 
       try {
-        await mutation.mutate({ userId: sessionId, term: term.trim() });
+        await mutation({ userId: sessionId, term: term.trim() });
       } catch (e) {
         console.error("Failed to log search", e);
       }

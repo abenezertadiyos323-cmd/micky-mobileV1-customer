@@ -119,7 +119,7 @@ export function useAddFavorite(sessionId: string | null) {
           });
         }
 
-        await mutation.mutate({ userId: sessionId, phoneId });
+        await mutation({ userId: sessionId, phoneId });
       } catch (e) {
         // revert on error
         if (setter) {
@@ -158,7 +158,7 @@ export function useRemoveFavorite(sessionId: string | null) {
           });
         }
 
-        await mutation.mutate({ userId: sessionId, phoneId });
+        await mutation({ userId: sessionId, phoneId });
       } catch (e) {
         // revert
         if (setter) {
