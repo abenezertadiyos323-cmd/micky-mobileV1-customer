@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { useAffiliateContext, useCreateAffiliate } from '@/hooks/useAffiliate';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
+import { ReferralDebugPanel } from '@/components/ReferralDebugPanel';
 
 
 // ---------------------------------------------------------------------------
@@ -316,9 +317,11 @@ function EarnTabInner() {
           <p className="text-xs text-muted-foreground">
             💰 Paid manually by admin
           </p>
-          {/* DEBUG — remove after confirming new build loads in Telegram */}
           <p className="text-xs text-muted-foreground/40 mt-1">Build: a2bb76c7</p>
         </div>
+
+        {/* Debug panel — hidden unless ?debug=1 or localStorage TEDY_DEBUG=1 */}
+        <ReferralDebugPanel />
       </div>
     </div>
   );

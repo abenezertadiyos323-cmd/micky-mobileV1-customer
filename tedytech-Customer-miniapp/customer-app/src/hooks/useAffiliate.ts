@@ -2,9 +2,20 @@ import {
   useQuery as useConvexQuery,
   useMutation as useConvexMutation,
 } from "convex/react";
-import { useState, createContext, useContext } from "react";
+import { useState, createContext, useContext, useEffect } from "react";
 import { api } from "@/convex_generated/api";
 import { useApp } from "@/contexts/AppContext";
+
+// Debug: active when ?debug=1 or localStorage TEDY_DEBUG=1.
+const _IS_DEBUG: boolean = (() => {
+  if (typeof window === "undefined") return false;
+  try {
+    if (new URLSearchParams(window.location.search).get("debug") === "1") return true;
+    if (localStorage.getItem("TEDY_DEBUG") === "1") return true;
+  } catch { /* ignore */ }
+  return false;
+})();
+const STATS_DEBUG_KEY = "TEDY_STATS_DEBUG_LAST";
 
 // ---------------------------------------------------------------------------
 // Runtime shape of affiliateCommissions rows from Convex.
@@ -58,9 +69,15 @@ export function useAffiliate() {
   const commissions = (commissionsData ?? []) as ConvexCommission[];
 
   // ── New: referral-table stats (populated by Telegram bot tracking) ────────
+  // Smoke-check: only fire the query when telegramId is a confirmed positive integer.
+  // Using an explicit type+range guard (not just truthiness) prevents passing 0, NaN,
+  // or any non-number value, which would trigger a Convex argument-validation error
+  // and crash the Telegram mini app.
   const referralStatsData = useConvexQuery(
     api.affiliates.getUserReferralStats,
-    telegramId ? { telegramId } : "skip",
+    typeof telegramId === "number" && telegramId > 0
+      ? { telegramId }
+      : "skip",
   );
 
   const safeNum = (v: unknown): number =>
@@ -106,6 +123,20 @@ export function useAffiliate() {
     isAuthLoading ||
     (customerId !== null && affiliateData === undefined) ||
     (affiliate !== null && commissionsData === undefined);
+
+  // When debug is enabled, persist latest stats snapshot to localStorage for ReferralDebugPanel.
+  useEffect(() => {
+    if (!_IS_DEBUG) return;
+    try {
+      localStorage.setItem(STATS_DEBUG_KEY, JSON.stringify({
+        stats,
+        statsLoaded: !isLoading,
+        statsError: null,
+        timestampISO: new Date().toISOString(),
+      }));
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [referralStatsData, affiliateData, isLoading]);
 
   return {
     affiliate,

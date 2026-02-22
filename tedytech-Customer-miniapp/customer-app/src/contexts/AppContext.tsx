@@ -68,6 +68,14 @@ const IS_DEBUG =
   new URLSearchParams(
     typeof window !== "undefined" ? window.location.search : "",
   ).get("debug") === "1" ||
+  (typeof window !== "undefined" &&
+    (() => {
+      try {
+        return localStorage.getItem("TEDY_DEBUG") === "1";
+      } catch {
+        return false;
+      }
+    })()) ||
   (import.meta.env.VITE_APP_ENVIRONMENT as string | undefined) === "dev";
 
 function debugLog(msg: string, data?: Record<string, unknown>) {
@@ -87,6 +95,8 @@ const TELEGRAM_STARTAPP_URL = `https://t.me/${storeConfig.botUsername}?startapp=
 const TG_USER_STORAGE_KEY = "tg_user_id";
 // Stores the ?ref= referral code from the URL across the session until auth resolves.
 const REF_STORAGE_KEY = "tedytech_ref";
+// localStorage key for referral-flow debug snapshot (always written, read by ReferralDebugPanel).
+const REF_DEBUG_KEY = "TEDY_REF_DEBUG_LAST";
 
 export interface TelegramUser {
   id: number;
@@ -446,8 +456,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // then fall back to Telegram start_param (app opened via startapp=ref_CODE).
         // createReferralIfValid has server-side guards (duplicate, self-referral).
         let refCode: string | null = null;
+        let _dbgRefSource: "url_ref" | "start_param" | "none" = "none";
+        let _dbgRefRaw = "";
         try {
-          refCode = localStorage.getItem(REF_STORAGE_KEY);
+          const urlRef = localStorage.getItem(REF_STORAGE_KEY);
+          if (urlRef) { refCode = urlRef; _dbgRefSource = "url_ref"; _dbgRefRaw = urlRef; }
         } catch { /* ignore */ }
 
         // Fallback: read Telegram's start_param (set when opened via startapp=ref_CODE)
@@ -456,19 +469,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
             const startParam = getTgWebApp()?.initDataUnsafe?.start_param;
             if (typeof startParam === "string" && startParam.startsWith("ref_")) {
               refCode = startParam.slice(4); // strip leading 'ref_'
+              _dbgRefSource = "start_param";
+              _dbgRefRaw = startParam;
               console.log("[TedyTech] referral code from start_param", { code: refCode });
             }
           } catch { /* ignore */ }
         }
 
         const tgUser = getTelegramUser();
-        if (refCode && tgUser?.id) {
-          console.log("[TedyTech] applying referral", { refCode, referredId: tgUser.id });
+        const _dbgMutationTriggered = !!(refCode && tgUser?.id);
+        // Always persist referral debug snapshot so the debug panel can read it.
+        try {
+          localStorage.setItem(REF_DEBUG_KEY, JSON.stringify({
+            capturedRefSource: _dbgRefSource,
+            capturedRefRaw: _dbgRefRaw,
+            capturedRefCode: refCode ?? "",
+            referralMutationTriggered: _dbgMutationTriggered,
+            referralMutationResult: _dbgMutationTriggered ? "pending" : "skipped",
+            referralMutationError: "",
+            timestampISO: new Date().toISOString(),
+          }));
+        } catch { /* ignore */ }
+
+        if (_dbgMutationTriggered) {
+          console.log("[TedyTech] applying referral", { refCode, referredId: tgUser!.id });
           createReferralMutation({
-            referralCode: refCode,
-            referredTelegramId: tgUser.id,
+            referralCode: refCode!,
+            referredTelegramId: tgUser!.id,
           })
-            .catch(() => { /* non-fatal — server guards prevent double-apply */ })
+            .then(() => {
+              try {
+                const prev = JSON.parse(localStorage.getItem(REF_DEBUG_KEY) ?? "{}") as Record<string, unknown>;
+                localStorage.setItem(REF_DEBUG_KEY, JSON.stringify({ ...prev, referralMutationResult: "success", referralMutationError: "" }));
+              } catch { /* ignore */ }
+            })
+            .catch((err: unknown) => {
+              /* non-fatal — server guards prevent double-apply */
+              try {
+                const prev = JSON.parse(localStorage.getItem(REF_DEBUG_KEY) ?? "{}") as Record<string, unknown>;
+                const msg = err instanceof Error ? err.message : String(err);
+                localStorage.setItem(REF_DEBUG_KEY, JSON.stringify({ ...prev, referralMutationResult: "error", referralMutationError: msg.slice(0, 120) }));
+              } catch { /* ignore */ }
+            })
             .finally(() => {
               // Clear after attempt regardless of result.
               // Server is idempotent — safe to clear here.
