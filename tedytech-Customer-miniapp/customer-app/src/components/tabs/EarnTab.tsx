@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Share2, DollarSign, Clock, CheckCircle, Users, AlertCircle, MessageSquare } from 'lucide-react';
+import { Copy, Share2, DollarSign, Clock, CheckCircle, Users, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAffiliateContext, useCreateAffiliate } from '@/hooks/useAffiliate';
@@ -121,21 +121,18 @@ function EarnTabInner() {
     }
   };
 
-  const handleShareTelegram = () => {
+  const handleShare = async () => {
     if (!referralLink) return;
-    const tg = (window as { Telegram?: { WebApp?: { openLink?: (url: string) => void } } })
-      .Telegram?.WebApp;
-    const url = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(`Get your next phone from TedyTech! Use my referral code ${referralCode}`)}`;
-    if (tg?.openLink) {
-      tg.openLink(url);
+    if (navigator.share) {
+      try {
+        await navigator.share({ text: shareMessage, url: referralLink });
+      } catch {
+        // User dismissed the share sheet — no feedback needed
+      }
     } else {
-      window.open(url, '_blank');
+      navigator.clipboard.writeText(referralLink).catch(() => {});
+      toast.success('Link copied!');
     }
-  };
-
-  const handleShareWhatsApp = () => {
-    if (!shareMessage) return;
-    window.open(`https://wa.me/?text=${encodeURIComponent(shareMessage)}`, '_blank');
   };
 
   // Always render the full dashboard immediately.
@@ -252,25 +249,14 @@ function EarnTabInner() {
               <Copy className="w-4 h-4" />
             </Button>
           </div>
-          <div className="flex gap-2">
-            <Button
-              className="flex-1 gap-2"
-              onClick={handleShareTelegram}
-              disabled={!stats.referralCode}
-            >
-              <Share2 className="w-4 h-4" />
-              Telegram
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1 gap-2"
-              onClick={handleShareWhatsApp}
-              disabled={!stats.referralCode}
-            >
-              <MessageSquare className="w-4 h-4" />
-              WhatsApp
-            </Button>
-          </div>
+          <Button
+            className="w-full gap-2"
+            onClick={handleShare}
+            disabled={!stats.referralCode}
+          >
+            <Share2 className="w-4 h-4" />
+            Share
+          </Button>
         </Card>
 
         {/* How It Works */}
