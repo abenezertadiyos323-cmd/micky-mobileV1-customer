@@ -36,6 +36,7 @@ const Index = () => {
     // If tapping Home while already on Home, reset navigation state
     if (tab === 'home' && activeTab === 'home') {
       setHomeKey(prev => prev + 1); // Force remount to reset state
+      window.scrollTo(0, 0);
       return;
     }
     if (tab === activeTab) return;
@@ -43,6 +44,7 @@ const Index = () => {
     setTimeout(() => {
       setActiveTab(tab);
       setIsTransitioning(false);
+      window.scrollTo(0, 0); // Always reset scroll to top on tab switch
     }, 150);
   };
 
@@ -84,7 +86,7 @@ const Index = () => {
               <SavedTab onNavigateToExchange={handleNavigateToExchange} />
             )}
             {activeTab === 'exchange' && <ExchangeTab />}
-            {activeTab === 'about' && <AboutTab />}
+            {activeTab === 'about' && <AboutTab onNavigateToExchange={handleNavigateToExchange} />}
             {activeTab === 'earn' && <EarnTab />}
           </Suspense>
         </div>
