@@ -65,6 +65,7 @@ function EarnTabInner() {
   const createAffiliate = useCreateAffiliate();
   const [hasTriedCreate, setHasTriedCreate] = useState(false);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const [showManualCopyDialog, setShowManualCopyDialog] = useState(false);
 
   // ── Auto-create affiliate when authenticated user visits Earn tab ─────────
   useEffect(() => {
@@ -119,10 +120,41 @@ function EarnTabInner() {
     }
   };
 
-  const handleCopyLink = () => {
-    if (referralLink) {
-      navigator.clipboard.writeText(referralLink).catch(() => {});
-      toast.success('Link copied!');
+  const handleCopyLink = async () => {
+    if (!referralLink) return;
+
+    // Primary: Clipboard API
+    let copied = false;
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      try {
+        await navigator.clipboard.writeText(referralLink);
+        copied = true;
+      } catch {
+        // fall through to textarea fallback
+      }
+    }
+
+    // Fallback: hidden textarea + execCommand (works in Telegram WebView)
+    if (!copied) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = referralLink;
+        ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        copied = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch {
+        copied = false;
+      }
+    }
+
+    if (copied) {
+      toast.success('Copied referral link');
+    } else {
+      toast.error('Copy failed — tap to select');
+      setShowManualCopyDialog(true);
     }
   };
 
@@ -324,6 +356,36 @@ function EarnTabInner() {
         {/* Debug panel — hidden unless ?debug=1 or localStorage TEDY_DEBUG=1 */}
         <ReferralDebugPanel />
       </div>
+
+      {/* Manual-copy fallback dialog — shown when clipboard API fails */}
+      {showManualCopyDialog && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          onClick={() => setShowManualCopyDialog(false)}
+        >
+          <div
+            className="bg-card rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-semibold text-foreground">Copy your referral link</h3>
+            <p className="text-xs text-muted-foreground">Long-press the link below and tap Copy:</p>
+            <input
+              readOnly
+              value={referralLink}
+              className="w-full bg-muted rounded-lg px-3 py-2 text-sm text-foreground font-mono break-all"
+              onFocus={(e) => e.currentTarget.select()}
+              onClick={(e) => e.currentTarget.select()}
+            />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowManualCopyDialog(false)}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

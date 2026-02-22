@@ -9,13 +9,28 @@ const sourceDir = path.resolve(__dirname, "../../../convex/_generated");
 const destinationDir = path.resolve(__dirname, "../src/convex_generated");
 
 async function syncConvexGenerated() {
+  // Check whether the source (monorepo root) exists — it won't on Vercel
+  // because only the customer-app sub-directory is uploaded.
+  let sourceExists = false;
   try {
     const sourceStat = await stat(sourceDir);
-    if (!sourceStat.isDirectory()) {
-      throw new Error(`Source is not a directory: ${sourceDir}`);
+    sourceExists = sourceStat.isDirectory();
+  } catch {
+    // source not present — expected in CI / Vercel environment
+  }
+
+  if (!sourceExists) {
+    // If the destination is already present (committed to git), use it as-is.
+    try {
+      const destStat = await stat(destinationDir);
+      if (destStat.isDirectory()) {
+        console.log(`Convex source not found; using committed convex_generated at ${destinationDir}`);
+        return;
+      }
+    } catch {
+      // destination also missing
     }
-  } catch (error) {
-    throw new Error(`Convex generated source is missing at ${sourceDir}`, { cause: error });
+    throw new Error(`Convex generated source is missing at ${sourceDir} and no committed fallback found at ${destinationDir}`);
   }
 
   await rm(destinationDir, { recursive: true, force: true });
