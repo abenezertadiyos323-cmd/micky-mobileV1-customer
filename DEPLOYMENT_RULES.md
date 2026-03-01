@@ -2,25 +2,35 @@
 
 ## Deployments
 
+Customer mini app now shares the **Admin MASTER** Convex project. There is a single project
+with two environments:
+
 | Name | URL | Purpose |
 |------|-----|---------|
-| Dev | `https://original-ram-766.convex.cloud` | Local development only |
-| **Production** | **`https://clever-partridge-181.convex.cloud`** | Live customer + admin apps |
+| **Production (MASTER)** | **`https://fastidious-schnauzer-265.convex.cloud`** | Live app (Admin + Customer) |
+| Dev (MASTER) | `https://dutiful-toucan-720.convex.cloud` | Local development (Admin + Customer) |
+
+> **OLD deployments retired:**
+> - `clever-partridge-181.convex.cloud` — old customer-only prod, no longer used
+> - `original-ram-766.convex.cloud` — old customer-only dev, no longer used
 
 ---
 
 ## How the CLI decides where to deploy
 
-`CONVEX_DEPLOYMENT` in `.env.local` identifies the **project** and sets the default target for the CLI:
+Convex functions live in `d:\Abenier\TedyTech Admin\Admin-Ted\convex\` (the MASTER repo).
+Always run Convex CLI commands from that directory:
 
 ```
-CONVEX_DEPLOYMENT=dev:original-ram-766  # project: tedytech, team: abenezertadiyos323
+# Admin-Ted repo: d:\Abenier\TedyTech Admin\Admin-Ted
+CONVEX_DEPLOYMENT=dev:dutiful-toucan-720
 ```
 
-- `npx convex dev` → always syncs to the **dev** deployment (`original-ram-766`).
-- `npx convex deploy` → deploys to the **production** deployment of the same project (`clever-partridge-181`). This is the default behaviour in Convex CLI ≥1.x — there is no `--prod` flag.
+- `npx convex dev` → syncs to the **dev** deployment (`dutiful-toucan-720`).
+- `npx convex deploy --yes` → deploys to **production** (`fastidious-schnauzer-265`).
 
-**`CONVEX_DEPLOYMENT` does not need to change.** `npx convex deploy` always goes to production.
+**Never run `npx convex deploy` from the customer repo** — the customer repo has no `convex/`
+functions of its own. It only consumes the generated types from Admin-Ted.
 
 ---
 
@@ -29,11 +39,11 @@ CONVEX_DEPLOYMENT=dev:original-ram-766  # project: tedytech, team: abenezertadiy
 ### Fixing a production bug
 
 ```bash
-# From repo root (d:\Ab\TedTech)
-npx convex deploy
+# From Admin-Ted repo: d:\Abenier\TedyTech Admin\Admin-Ted
+npx convex deploy --yes
 ```
 
-This atomically pushes schema + all functions to `clever-partridge-181`. Always run this after any change to `convex/` that needs to reach live users.
+This atomically pushes schema + all functions to `fastidious-schnauzer-265`.
 
 ### Local development
 
@@ -41,33 +51,42 @@ This atomically pushes schema + all functions to `clever-partridge-181`. Always 
 npx convex dev
 ```
 
-Watches `convex/` and hot-reloads to `original-ram-766`. Safe to use freely — it never touches production.
+Watches `convex/` and hot-reloads to `dutiful-toucan-720`. Safe to use freely — never touches production.
 
 ---
 
 ## Frontend URLs must match production
 
-Both mini apps point to the production deployment. These values must never be changed to the dev URL:
+Both apps must point to the same MASTER deployment. Never split them:
 
 | App | File | Required value |
 |-----|------|----------------|
-| Customer | `tedytech-Customer-miniapp/.env` | `VITE_CONVEX_URL=https://clever-partridge-181.convex.cloud` |
-| Admin | `tedytech-admin-miniapp/.env` | `VITE_CONVEX_URL=https://clever-partridge-181.convex.cloud` |
+| Customer | `tedytech-Customer-miniapp/customer-app/.env.production` | `VITE_CONVEX_URL=https://fastidious-schnauzer-265.convex.cloud` |
+| Customer (local) | `tedytech-Customer-miniapp/customer-app/.env.local` | `VITE_CONVEX_URL=https://fastidious-schnauzer-265.convex.cloud` |
+| Admin | `Admin-Ted/.env.production` / Vercel env var | `VITE_CONVEX_URL=https://fastidious-schnauzer-265.convex.cloud` |
 
-If these point to `original-ram-766` the apps will hit the dev deployment and **will not reflect production schema or data**.
+---
+
+## Syncing generated types to customer app
+
+The customer app reads Convex types from Admin-Ted's `_generated` directory via a prebuild script:
+
+```bash
+# customer-app/scripts/syncConvexGenerated.mjs
+# Primary source: d:\Abenier\TedyTech Admin\Admin-Ted\convex\_generated
+# Destination:    customer-app/src/convex_generated/
+```
+
+Run before building: `node scripts/syncConvexGenerated.mjs`
+The `prebuild` npm script does this automatically.
 
 ---
 
 ## Post-deploy verification
 
-After every `npx convex deploy`:
+After every `npx convex deploy --yes`:
 
-1. **Dashboard** → [dashboard.convex.dev](https://dashboard.convex.dev) → project `tedytech` → switch to **Production** environment.
+1. **Dashboard** → [dashboard.convex.dev](https://dashboard.convex.dev) → project `Admin-Ted` → switch to **Production** environment.
 2. **Functions tab** → confirm the updated functions appear with a recent deploy timestamp.
 3. **Data tab** → check any modified table's Indexes sub-tab to confirm new indexes are present.
 4. **Logs tab** → open the app and watch for `Error` status on any function — there should be none.
-5. Quick CLI smoke test:
-   ```bash
-   npx convex run favorites:getFavorites '{}'
-   # Expected: []
-   ```

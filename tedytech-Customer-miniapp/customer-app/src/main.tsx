@@ -10,6 +10,9 @@ import "./index.css";
 // ---------------------------------------------------------------------------
 const _convexUrl = (import.meta.env.VITE_CONVEX_URL ?? "") as string;
 
+// Log the Convex host once at startup so we can confirm which deployment is active.
+console.log("[Convex] host:", _convexUrl ? new URL(_convexUrl).hostname : "(not set)");
+
 type RuntimeTgWebApp = {
   initData?: string;
 };
