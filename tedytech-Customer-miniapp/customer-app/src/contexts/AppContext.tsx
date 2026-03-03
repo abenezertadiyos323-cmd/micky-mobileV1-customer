@@ -349,11 +349,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const tg = getTgWebApp();
         const initDataLen = tg?.initData?.length ?? 0;
 
-        // One-time log — always emitted (not gated by IS_DEBUG) so it appears
-        // in Vercel logs and makes the crash reason immediately obvious.
+        // One-time dev log — helps diagnose gate failures during local dev.
         if (!initDataLoggedOnce) {
           initDataLoggedOnce = true;
-          console.log("[TG] initData length:", initDataLen);
+          if (import.meta.env.DEV) {
+            console.log("[TG] initData length:", initDataLen);
+          }
         }
 
         // Gate requires BOTH a valid WebApp object AND non-empty initData.
