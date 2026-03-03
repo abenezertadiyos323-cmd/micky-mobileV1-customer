@@ -17,6 +17,7 @@ export function BackendReadiness() {
   const { telegramUser } = useApp();
   const [checks, setChecks] = useState<CheckResult[]>([
     { name: "products:listAllProducts", status: "pending" },
+    { name: "products:listProducts", status: "pending" },
     { name: "search:getSearchPanelData", status: "pending" },
     { name: "favorites:getFavorites", status: "pending" },
     { name: "affiliates:getUserReferralStats", status: "pending" },
@@ -68,7 +69,37 @@ export function BackendReadiness() {
         });
       }
 
-      // 2. search:getSearchPanelData
+      // 2. products:listProducts - primary customer UI query
+      try {
+        const response = await fetch(`${convexUrl}/api/query?name=products:listProducts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ search: "", tab: "all" }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const count = Array.isArray(data) ? data.length : 0;
+          results.push({
+            name: "products:listProducts",
+            status: "pass",
+            error: `returned ${count} item${count !== 1 ? "s" : ""}`,
+          });
+        } else {
+          results.push({
+            name: "products:listProducts",
+            status: "fail",
+            error: `HTTP ${response.status}`,
+          });
+        }
+      } catch (e) {
+        results.push({
+          name: "products:listProducts",
+          status: "fail",
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+
+      // 4. search:getSearchPanelData
       try {
         const response = await fetch(`${convexUrl}/api/query?name=search:getSearchPanelData`, {
           method: "POST",
@@ -92,7 +123,7 @@ export function BackendReadiness() {
         });
       }
 
-      // 3. favorites:getFavorites (only if telegramUser exists)
+      // 5. favorites:getFavorites (only if telegramUser exists)
       if (telegramUser?.id) {
         try {
           const response = await fetch(`${convexUrl}/api/query?name=favorites:getFavorites`, {
@@ -124,7 +155,7 @@ export function BackendReadiness() {
         });
       }
 
-      // 4. affiliates:getUserReferralStats (only if telegramUser.id exists)
+      // 6. affiliates:getUserReferralStats (only if telegramUser.id exists)
       if (telegramUser?.id) {
         try {
           const response = await fetch(
@@ -162,7 +193,7 @@ export function BackendReadiness() {
         });
       }
 
-      // 5. sessions:createSession - use mutation
+      // 7. sessions:createSession - use mutation
       try {
         await createSessionMutation();
         results.push({ name: "sessions:createSession", status: "pass" });
@@ -174,7 +205,7 @@ export function BackendReadiness() {
         });
       }
 
-      // 6. threads:listThreads
+      // 8. threads:listThreads
       try {
         const response = await fetch(`${convexUrl}/api/query?name=threads:listThreads`, {
           method: "POST",
