@@ -2,35 +2,45 @@ import { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft, Heart, ShoppingBag, RefreshCw, Check, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { usePhoneDetail } from '@/hooks/usePhones';
+import { useCreatePhoneAction, type LeadSourceTab } from '@/hooks/usePhoneActions';
 import { cn } from '@/lib/utils';
-import type { Phone, PhoneVariant } from '@/types/phone';
-import { formatPrice, getPhoneDisplayName, getConditionLabel } from '@/types/phone';
+import type { Phone } from '@/types/phone';
+import { formatPrice, getConditionLabel } from '@/types/phone';
+import { storeConfig } from '@/config/storeConfig';
+import { mapToProductVM, productVMToPhone, type ProductVM } from '@/lib/mapProduct';
 
 interface ProductDetailProps {
   phoneId: string;
-  phone?: Phone; // Optional initial data for faster display
+  product?: ProductVM; // Optional initial data for faster display
   onBack: () => void;
   onExchange: () => void;
+  sourceTab?: LeadSourceTab; // Which tab opened this detail view
 }
 
-export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange }: ProductDetailProps) {
-  const { toggleSaved, isSaved, setTargetExchangePhone } = useApp();
+export function ProductDetail({ phoneId, product: initialProduct, onBack, onExchange, sourceTab = 'product_detail' }: ProductDetailProps) {
+  const { toggleSaved, isSaved, setTargetExchangePhone, sessionId } = useApp();
   const { data: phoneDetail, isLoading } = usePhoneDetail(phoneId);
+  const createPhoneAction = useCreatePhoneAction(sessionId);
 
-  const phone = phoneDetail?.phone || initialPhone;
+  const rawPhone: Phone | null =
+    phoneDetail?.phone ??
+    (initialProduct ? productVMToPhone(initialProduct) : null);
+  const product: ProductVM | null = rawPhone
+    ? mapToProductVM(rawPhone as unknown as Record<string, unknown>)
+    : initialProduct ?? null;
   const images = phoneDetail?.images || [];
   const variants = phoneDetail?.variants || [];
 
   // Get unique colors and storage options from variants
   const uniqueColors = useMemo(() => {
     const colors = [...new Set(variants.map(v => v.color))];
-    return colors.length > 0 ? colors : (phone?.color ? [phone.color] : ['Default']);
-  }, [variants, phone?.color]);
+    return colors.length > 0 ? colors : (rawPhone?.color ? [rawPhone.color] : ['Default']);
+  }, [variants, rawPhone?.color]);
 
   const uniqueStorages = useMemo(() => {
     const storages = [...new Set(variants.map(v => v.storage_gb))].sort((a, b) => a - b);
-    return storages.length > 0 ? storages : (phone?.storage_gb ? [phone.storage_gb] : []);
-  }, [variants, phone?.storage_gb]);
+    return storages.length > 0 ? storages : (rawPhone?.storage_gb ? [rawPhone.storage_gb] : []);
+  }, [variants, rawPhone?.storage_gb]);
 
   const [selectedColor, setSelectedColor] = useState(uniqueColors[0] || 'Default');
   const [selectedStorage, setSelectedStorage] = useState<number | null>(null);
@@ -46,11 +56,11 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
     }
   }, [uniqueStorages, variants, selectedStorage]);
 
-  const saved = phone ? isSaved(phone.id) : false;
+  const saved = product ? isSaved(product.id) : false;
 
   // Find current variant based on selection
   const currentVariant = useMemo(() => {
-    return variants.find(v => 
+    return variants.find(v =>
       v.color === selectedColor && v.storage_gb === selectedStorage
     ) || variants.find(v => v.storage_gb === selectedStorage) || variants[0];
   }, [variants, selectedColor, selectedStorage]);
@@ -58,16 +68,16 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
   // Calculate current price
   const currentPrice = useMemo(() => {
     if (currentVariant?.price_birr) return currentVariant.price_birr;
-    return phone?.price_birr || 0;
-  }, [currentVariant, phone?.price_birr]);
+    return product?.priceBirr || 0;
+  }, [currentVariant, product?.priceBirr]);
 
   // Image gallery - use detail images or fallback to main image
   const imageUrls = useMemo(() => {
     if (images.length > 0) {
       return images.map(img => img.image_url);
     }
-    return phone?.main_image_url ? [phone.main_image_url] : [];
-  }, [images, phone?.main_image_url]);
+    return product?.imageUrl ? [product.imageUrl] : [];
+  }, [images, product?.imageUrl]);
 
   const nextImage = () => {
     if (imageUrls.length <= 1) return;
@@ -82,35 +92,53 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
   };
 
   const handleSave = () => {
-    if (!phone) return;
+    if (!product) return;
     setIsHeartAnimating(true);
-    toggleSaved(phone.id);
+    toggleSaved(product.id);
     setTimeout(() => setIsHeartAnimating(false), 400);
   };
 
   const handleExchange = () => {
-    if (!phone) return;
-    setTargetExchangePhone(phone);
+    if (!product) return;
+    setTargetExchangePhone(rawPhone ?? productVMToPhone(product));
     onExchange();
   };
 
   // Generate dynamic item ID for Telegram deep link
-  const generateItemId = (phone: Phone, storage: number | null): string => {
-    const brand = phone.brand.toLowerCase().replace(/\s+/g, '_');
-    const model = phone.model.toLowerCase().replace(/\s+/g, '_');
+  const generateItemId = (item: ProductVM, storage: number | null): string => {
+    const brand = item.brand.toLowerCase().replace(/\s+/g, '_');
+    const model = item.model.toLowerCase().replace(/\s+/g, '_');
     const storageStr = storage ? `_${storage}gb` : '';
     return `${brand}_${model}${storageStr}`;
   };
 
-  const handleStartInquiry = () => {
-    if (!phone) return;
-    const itemId = generateItemId(phone, selectedStorage);
-    const botUsername = 'YOUR_BOT_USERNAME'; // Placeholder - replace with actual bot username
-    const deepLink = `https://t.me/${botUsername}?start=item_${itemId}`;
-    window.open(deepLink, '_blank');
+  /**
+   * P0: Log the lead action FIRST, then redirect to Telegram.
+   * The Convex document ID is used as the start param so the bot
+   * can look up the lead immediately on message receipt.
+   */
+  const handleStartInquiry = async () => {
+    if (!product) return;
+
+    try {
+      const leadId = await createPhoneAction.mutate({
+        actionType: 'inquiry',
+        sourceTab,
+        sourceProductId: product.id,
+        timestamp: Date.now(),
+      });
+
+      const deepLink = `https://t.me/${storeConfig.botUsername}?start=${storeConfig.telegramStartPrefix}${leadId}`;
+      window.open(deepLink, '_blank');
+    } catch {
+      // Error already toasted inside useCreatePhoneAction — nothing to do here.
+      // Fallback: open bot without a start param so the user isn't blocked.
+      const itemId = generateItemId(product, selectedStorage);
+      window.open(`https://t.me/${storeConfig.botUsername}?start=item_${itemId}`, '_blank');
+    }
   };
 
-  if (!phone && isLoading) {
+  if (!product && isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -118,7 +146,7 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
     );
   }
 
-  if (!phone) {
+  if (!product) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <p className="text-muted-foreground mb-4">Phone not found</p>
@@ -127,9 +155,9 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
     );
   }
 
-  const displayName = getPhoneDisplayName(phone);
-  const highlights = phone.key_highlights || [];
-  const specs = phone.key_specs as Record<string, string> | null;
+  const displayName = product.title;
+  const highlights = rawPhone?.key_highlights || [];
+  const specs = rawPhone?.key_specs as Record<string, string> | null;
 
   return (
     <div className="min-h-screen bg-background pb-64 animate-slide-in-right">
@@ -169,7 +197,7 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
             )}
           />
         )}
-        
+
         {/* Navigation Arrows */}
         {imageUrls.length > 1 && (
           <>
@@ -187,7 +215,7 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
             </button>
           </>
         )}
-        
+
         {/* Image Indicators */}
         {imageUrls.length > 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
@@ -200,8 +228,8 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
                 }}
                 className={cn(
                   "h-2 rounded-full transition-all duration-300",
-                  index === currentImageIndex 
-                    ? "bg-primary w-6" 
+                  index === currentImageIndex
+                    ? "bg-primary w-6"
                     : "bg-card/60 w-2 hover:bg-card/80"
                 )}
               />
@@ -218,15 +246,15 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
             <h2 className="text-2xl font-bold text-foreground">{displayName}</h2>
             <span className={cn(
               "text-xs px-2 py-1 rounded-lg",
-              phone.condition === 'new' ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"
+              product.condition.toLowerCase() === 'new' ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"
             )}>
-              {getConditionLabel(phone.condition)}
+              {getConditionLabel(product.condition)}
             </span>
           </div>
           <p className="text-2xl font-bold text-primary mb-2">{formatPrice(currentPrice)}</p>
-          {phone.old_price_birr && phone.old_price_birr > currentPrice && (
+          {rawPhone?.old_price_birr && rawPhone.old_price_birr > currentPrice && (
             <p className="text-sm text-muted-foreground line-through">
-              {formatPrice(phone.old_price_birr)}
+              {formatPrice(rawPhone.old_price_birr)}
             </p>
           )}
         </div>
@@ -292,8 +320,8 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
             <p className="text-xs text-muted-foreground mb-3">Updated by our team for this phone</p>
             <ul className="space-y-2">
               {highlights.map((highlight, index) => (
-                <li 
-                  key={index} 
+                <li
+                  key={index}
                   className="flex items-start gap-2 opacity-0 animate-fade-in"
                   style={{ animationDelay: `${0.3 + index * 0.05}s`, animationFillMode: 'forwards' }}
                 >
@@ -311,8 +339,8 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
             <h3 className="font-semibold text-foreground mb-3">Key Specs</h3>
             <ul className="space-y-2">
               {Object.entries(specs).map(([key, value], index) => (
-                <li 
-                  key={key} 
+                <li
+                  key={key}
                   className="flex items-start gap-2 opacity-0 animate-fade-in"
                   style={{ animationDelay: `${0.4 + index * 0.05}s`, animationFillMode: 'forwards' }}
                 >
@@ -327,26 +355,31 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
         )}
 
         {/* Description */}
-        {phone.description && (
+        {rawPhone?.description && (
           <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <h3 className="font-semibold text-foreground mb-2">Description</h3>
-            <p className="text-sm text-muted-foreground">{phone.description}</p>
+            <p className="text-sm text-muted-foreground">{rawPhone.description}</p>
           </div>
         )}
       </div>
 
       {/* Bottom Actions */}
       <div className="fixed left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border p-4 pb-5 space-y-2 animate-slide-up z-40" style={{ bottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}>
-        <button 
+        <button
           onClick={handleStartInquiry}
-          className="w-full py-2.5 bg-primary text-primary-foreground font-medium text-sm rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-button press-effect hover-glow"
+          disabled={createPhoneAction.isPending}
+          className="w-full py-2.5 bg-primary text-primary-foreground font-medium text-sm rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-button press-effect hover-glow disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <ShoppingBag className="w-4 h-4" />
+          {createPhoneAction.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <ShoppingBag className="w-4 h-4" />
+          )}
           <span>ጠይቀው ይዘዙ</span>
         </button>
-        
-        {phone.exchange_available && (
-          <button 
+
+        {rawPhone?.exchange_available && (
+          <button
             onClick={handleExchange}
             className="w-full py-2 bg-muted text-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-muted/80 transition-all duration-300 press-effect"
           >
@@ -354,8 +387,8 @@ export function ProductDetail({ phoneId, phone: initialPhone, onBack, onExchange
             <span>Exchange</span>
           </button>
         )}
-        
-        {phone.exchange_available && (
+
+        {rawPhone?.exchange_available && (
           <p className="text-center text-[10px] text-muted-foreground">
             Exchange available. Final offer confirmed after inspection.
           </p>

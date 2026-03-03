@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useMutation as useConvexMutation } from "convex/react";
 import { api } from "@/convex_generated/api";
-import { useSession } from "./useSession";
+import { useApp } from "@/contexts/AppContext";
 
 const TELEGRAM_AUTH_ERROR =
   "Couldn't verify your Telegram account. Please reopen this mini app from Telegram.";
@@ -16,7 +16,7 @@ interface TelegramIdentity {
 }
 
 export function useAuth() {
-  const { sessionId, isLoading: sessionLoading } = useSession();
+  const { sessionId, isSessionLoading: sessionLoading } = useApp();
   const loginWithTelegram = useConvexMutation(api.auth.loginWithTelegram);
   const [telegramIdentity, setTelegramIdentity] =
     useState<TelegramIdentity | null>(null);

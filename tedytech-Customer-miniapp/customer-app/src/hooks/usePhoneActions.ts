@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   useMutation as useConvexMutation,
   useQuery as useConvexQuery,
@@ -5,31 +6,44 @@ import {
 import { api } from "@/convex_generated/api";
 import { toast } from "@/hooks/use-toast";
 
+export type LeadActionType = "inquiry" | "exchange" | "call" | "map";
+export type LeadSourceTab =
+  | "home"
+  | "search"
+  | "saved"
+  | "product_detail"
+  | "about";
+
 interface CreateActionParams {
-  phoneId: string;
-  variantId?: string | null;
-  actionType: "reserve" | "ask";
+  actionType: LeadActionType;
+  sourceTab: LeadSourceTab;
+  sourceProductId?: string | null;
+  timestamp?: number;
 }
 
 export function useCreatePhoneAction(sessionId: string | null) {
   const mutation = useConvexMutation(api.phoneActions.createPhoneActionRequest);
+  const [isPending, setIsPending] = useState(false);
 
   return {
-    mutate: async ({ phoneId, variantId, actionType }: CreateActionParams) => {
+    isPending,
+    mutate: async ({
+      actionType,
+      sourceTab,
+      sourceProductId,
+      timestamp,
+    }: CreateActionParams) => {
       if (!sessionId) throw new Error("No session");
 
+      setIsPending(true);
       try {
         const id = await mutation({
           sessionId,
-          phoneId,
-          variantId: variantId ?? null,
           actionType,
+          sourceTab,
+          sourceProductId: sourceProductId ?? undefined,
+          timestamp: timestamp ?? Date.now(),
         });
-        const message =
-          actionType === "reserve"
-            ? "Deposit request submitted! Our team will contact you on Telegram."
-            : "Question sent! Our team will respond on Telegram.";
-        toast({ title: "Request Sent!", description: message });
         return id;
       } catch (e) {
         console.error("Failed to create action:", e);
@@ -39,6 +53,8 @@ export function useCreatePhoneAction(sessionId: string | null) {
           variant: "destructive",
         });
         throw e;
+      } finally {
+        setIsPending(false);
       }
     },
   };
@@ -48,7 +64,7 @@ interface CreateExchangeParams {
   desiredPhoneId: string;
   offeredModel: string;
   offeredStorageGb: number;
-  offeredCondition: string; // Will be stored lowercase
+  offeredCondition: string;
   offeredNotes: string;
 }
 
@@ -56,11 +72,14 @@ export function useCreateExchangeRequest(sessionId: string | null) {
   const mutation = useConvexMutation(
     api.phoneActions.createExchangeRequestMiniapp,
   );
+  const [isPending, setIsPending] = useState(false);
 
   return {
+    isPending,
     mutate: async (params: CreateExchangeParams) => {
       if (!sessionId) throw new Error("No session");
 
+      setIsPending(true);
       try {
         const id = await mutation({
           sessionId,
@@ -83,16 +102,17 @@ export function useCreateExchangeRequest(sessionId: string | null) {
           variant: "destructive",
         });
         throw e;
+      } finally {
+        setIsPending(false);
       }
     },
   };
 }
 
-// Fetch exchange requests for session
 export function useExchangeRequests(sessionId: string | null) {
   const data = useConvexQuery(
     api.phoneActions.getExchangeRequestsV2,
-    sessionId ? { sessionId } : (undefined as any),
+    sessionId ? { sessionId } : "skip",
   );
   return {
     data: data ?? [],
@@ -101,14 +121,13 @@ export function useExchangeRequests(sessionId: string | null) {
   };
 }
 
-// Fetch single exchange detail (secure with session ownership)
 export function useExchangeDetail(
   requestId: string | null,
   sessionId: string | null,
 ) {
   const data = useConvexQuery(
     api.phoneActions.getExchangeDetailV2,
-    requestId && sessionId ? { requestId, sessionId } : (undefined as any),
+    requestId && sessionId ? { requestId, sessionId } : "skip",
   );
   return {
     data: data ?? null,

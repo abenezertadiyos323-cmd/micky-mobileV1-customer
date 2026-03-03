@@ -182,28 +182,34 @@ export function AboutTab({ onNavigateToExchange }: AboutTabProps) {
     }, 50);
   };
 
-  const handleCall = () => {
-    // Fire-and-forget lead log — never blocks the tel: redirect
+  const handleCall = async () => {
     if (sessionId && storeConfig.phoneNumberE164) {
-      createPhoneAction.mutate({
-        phoneId: 'store_contact',
-        actionType: 'call',
-        sourceTab: 'about',
-      }).catch(() => {/* non-blocking */});
+      try {
+        await createPhoneAction.mutate({
+          actionType: "call",
+          sourceTab: "about",
+          timestamp: Date.now(),
+        });
+      } catch {
+        // Keep call CTA usable even if lead logging fails.
+      }
     }
     if (storeConfig.phoneNumberE164) {
       window.location.href = `tel:${storeConfig.phoneNumberE164}`;
     }
   };
 
-  const handleDirections = () => {
-    // Fire-and-forget lead log — never blocks the maps redirect
+  const handleDirections = async () => {
     if (sessionId && storeConfig.mapsUrl) {
-      createPhoneAction.mutate({
-        phoneId: 'store_contact',
-        actionType: 'map',
-        sourceTab: 'about',
-      }).catch(() => {/* non-blocking */});
+      try {
+        await createPhoneAction.mutate({
+          actionType: "map",
+          sourceTab: "about",
+          timestamp: Date.now(),
+        });
+      } catch {
+        // Keep directions CTA usable even if lead logging fails.
+      }
     }
     if (storeConfig.mapsUrl) {
       window.open(storeConfig.mapsUrl, '_blank');

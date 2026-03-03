@@ -2,246 +2,331 @@ import { useQuery as useConvexQuery } from "convex/react";
 import { api } from "@/convex_generated/api";
 import { phones as localPhones } from "@/data/products";
 import type { Phone, PhoneDetail } from "@/types/phone";
+import { mapToProductVM, productVMToPhone } from "@/lib/mapProduct";
 
-// Fetch new arrivals for home page
-export function useNewArrivals(limit = 10) {
-  const convexProducts = useConvexQuery(api.products.listAllProducts) as
-    | any[]
-    | undefined;
-  const products = (convexProducts ?? localPhones) as any[];
-  const data = products
-    .filter((p) => (p.in_stock ?? true) && !(p.is_accessory ?? false))
-    .slice(0, limit) as unknown as Phone[];
-  return { data, isLoading: convexProducts === undefined };
+type RawProduct = Record<string, unknown>;
+
+function parseStorageGb(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+  const parsed = Number(value.replace(/[^0-9]/g, ""));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
-// Fetch popular phones for home page
-export function usePopularPhones(limit = 10) {
-  const convexProducts = useConvexQuery(api.products.listAllProducts) as
-    | any[]
-    | undefined;
-  const products = (convexProducts ?? localPhones) as any[];
-  const data = products
-    .filter(
-      (p) =>
-        (p.is_popular ?? p.isTopDeal ?? false) && !(p.is_accessory ?? false),
-    )
-    .slice(0, limit) as unknown as Phone[];
-  return { data, isLoading: convexProducts === undefined };
+function normalizeCondition(value: unknown): string {
+  if (typeof value !== "string" || !value.trim()) return "used";
+  return value.trim().toLowerCase().replace(/\s+/g, "_");
 }
 
-// Fetch premium picks for home page
-export function usePremiumPicks(limit = 10) {
-  const convexProducts = useConvexQuery(api.products.listAllProducts) as
-    | any[]
-    | undefined;
-  const products = (convexProducts ?? localPhones) as any[];
-  const data = products
-    .filter(
-      (p) =>
-        (p.is_premium ?? p.isPremium ?? false) && !(p.is_accessory ?? false),
-    )
-    .slice(0, limit) as unknown as Phone[];
-  return { data, isLoading: convexProducts === undefined };
+function normalizePhone(raw: RawProduct): Phone {
+  const vm = mapToProductVM(raw);
+  const base = productVMToPhone(vm);
+
+  const keySpecs = raw.key_specs;
+  const legacySpecs = raw.specs;
+
+  return {
+    ...base,
+    storage_gb: parseStorageGb(raw.storage_gb ?? raw.storage),
+    old_price_birr:
+      typeof raw.old_price_birr === "number"
+        ? raw.old_price_birr
+        : typeof raw.oldPrice === "number"
+          ? raw.oldPrice
+          : null,
+    condition: normalizeCondition(raw.condition ?? vm.condition),
+    description: typeof raw.description === "string" ? raw.description : null,
+    color: typeof raw.color === "string" ? raw.color : null,
+    in_stock:
+      typeof raw.in_stock === "boolean"
+        ? raw.in_stock
+        : typeof raw.inStock === "boolean"
+          ? raw.inStock
+          : vm.inStock,
+    stock_count:
+      typeof raw.stock_count === "number"
+        ? raw.stock_count
+        : typeof raw.stockCount === "number"
+          ? raw.stockCount
+          : null,
+    is_new_arrival:
+      typeof raw.is_new_arrival === "boolean"
+        ? raw.is_new_arrival
+        : typeof raw.isNewArrival === "boolean"
+          ? raw.isNewArrival
+          : typeof raw.isNew === "boolean"
+            ? raw.isNew
+            : false,
+    is_popular:
+      typeof raw.is_popular === "boolean"
+        ? raw.is_popular
+        : typeof raw.isPopular === "boolean"
+          ? raw.isPopular
+          : typeof raw.isTopDeal === "boolean"
+            ? raw.isTopDeal
+            : false,
+    is_premium:
+      typeof raw.is_premium === "boolean"
+        ? raw.is_premium
+        : typeof raw.isPremium === "boolean"
+          ? raw.isPremium
+          : false,
+    is_accessory:
+      typeof raw.is_accessory === "boolean"
+        ? raw.is_accessory
+        : typeof raw.isAccessory === "boolean"
+          ? raw.isAccessory
+          : false,
+    exchange_available:
+      typeof raw.exchange_available === "boolean"
+        ? raw.exchange_available
+        : typeof raw.exchangeAvailable === "boolean"
+          ? raw.exchangeAvailable
+          : false,
+    negotiable:
+      typeof raw.negotiable === "boolean" ? raw.negotiable : null,
+    key_highlights: Array.isArray(raw.key_highlights)
+      ? (raw.key_highlights.filter(
+          (item): item is string => typeof item === "string" && !!item,
+        ) as string[])
+      : Array.isArray(raw.highlights)
+        ? (raw.highlights.filter(
+            (item): item is string => typeof item === "string" && !!item,
+          ) as string[])
+        : null,
+    key_specs:
+      keySpecs && typeof keySpecs === "object"
+        ? (keySpecs as Record<string, unknown>)
+        : Array.isArray(legacySpecs)
+          ? Object.fromEntries(
+              legacySpecs
+                .filter((item): item is string => typeof item === "string")
+                .map((item, index) => [`Spec ${index + 1}`, item]),
+            )
+          : null,
+    created_at:
+      typeof raw.created_at === "string"
+        ? raw.created_at
+        : typeof raw.createdAt === "number"
+          ? new Date(raw.createdAt).toISOString()
+          : null,
+    updated_at:
+      typeof raw.updated_at === "string"
+        ? raw.updated_at
+        : typeof raw.updatedAt === "number"
+          ? new Date(raw.updatedAt).toISOString()
+          : null,
+  };
 }
 
-// Fetch accessories
-export function useAccessories(limit = 20) {
+function useNormalizedProducts() {
   const convexProducts = useConvexQuery(api.products.listAllProducts) as
-    | any[]
+    | RawProduct[]
     | undefined;
-  const products = (convexProducts ?? localPhones) as any[];
-  const data = products
-    .filter((p) => p.is_accessory ?? p.isAccessory ?? false)
-    .slice(0, limit) as unknown as Phone[];
-  return { data, isLoading: convexProducts === undefined };
+  const source = (convexProducts ?? (localPhones as unknown as RawProduct[])).filter(
+    Boolean,
+  );
+
+  return {
+    products: source.map(normalizePhone).filter((p) => !!p.id),
+    isLoading: convexProducts === undefined,
+  };
 }
 
 // Brand mapping: UI brand names to DB brand values
 const BRAND_MAPPING: Record<string, { brands: string[]; exclude?: boolean }> = {
-  iPhones: { brands: ["Apple"] },
+  iPhones: { brands: ["Apple", "iPhones", "iPhone"] },
   Samsung: { brands: ["Samsung"] },
   Tecno: { brands: ["Tecno"] },
   Infinix: { brands: ["Infinix"] },
   Xiaomi: { brands: ["Xiaomi", "Redmi", "Poco"] },
   "Other Android": {
-    brands: ["Apple", "Samsung", "Tecno", "Infinix", "Xiaomi", "Redmi", "Poco"],
+    brands: [
+      "Apple",
+      "iPhones",
+      "iPhone",
+      "Samsung",
+      "Tecno",
+      "Infinix",
+      "Xiaomi",
+      "Redmi",
+      "Poco",
+    ],
     exclude: true,
   },
 };
 
-// Condition mapping: UI condition names to possible DB values
 const CONDITION_MAPPING: Record<string, string[]> = {
-  New: ["new", "New", "NEW", "brand_new", "Brand New"],
-  "Like New": [
-    "like_new",
-    "Like New",
-    "like new",
-    "LIKE_NEW",
-    "excellent",
-    "Excellent",
-  ],
-  Used: [
-    "used",
-    "Used",
-    "USED",
-    "good",
-    "Good",
-    "fair",
-    "Fair",
-    "used_a",
-    "used_b",
-    "used_c",
-    "used_d",
-  ],
+  New: ["new", "brand_new"],
+  "Like New": ["like_new", "excellent"],
+  Used: ["used", "good", "fair"],
 };
 
-// Browse all phones with filters
 interface BrowseFilters {
   search?: string;
-  brands?: string[]; // UI brand names like "iPhones", "Samsung", etc.
+  brands?: string[];
   storage?: number[];
-  conditions?: string[]; // UI condition names like "New", "Like New", "Used"
+  conditions?: string[];
   budget?: { min: number; max: number } | null;
   sort?: "newest" | "price-low" | "price-high";
 }
 
+export function useNewArrivals(limit = 10) {
+  const { products, isLoading } = useNormalizedProducts();
+  const inStockPhones = products.filter(
+    (p) => p.in_stock !== false && p.is_accessory !== true,
+  );
+  const arrivals = inStockPhones.filter((p) => p.is_new_arrival);
+  const data = (arrivals.length > 0 ? arrivals : inStockPhones).slice(0, limit);
+  return { data, isLoading };
+}
+
+export function usePopularPhones(limit = 10) {
+  const { products, isLoading } = useNormalizedProducts();
+  const inStockPhones = products.filter(
+    (p) => p.in_stock !== false && p.is_accessory !== true,
+  );
+  const popular = inStockPhones.filter((p) => p.is_popular);
+  const data = (popular.length > 0 ? popular : inStockPhones).slice(0, limit);
+  return { data, isLoading };
+}
+
+export function usePremiumPicks(limit = 10) {
+  const { products, isLoading } = useNormalizedProducts();
+  const inStockPhones = products.filter(
+    (p) => p.in_stock !== false && p.is_accessory !== true,
+  );
+  const premium = inStockPhones.filter((p) => p.is_premium);
+  const data = (premium.length > 0 ? premium : inStockPhones).slice(0, limit);
+  return { data, isLoading };
+}
+
+export function useAccessories(limit = 20) {
+  const { products, isLoading } = useNormalizedProducts();
+  const data = products
+    .filter((p) => p.is_accessory === true && p.in_stock !== false)
+    .slice(0, limit);
+  return { data, isLoading };
+}
+
 export function useBrowsePhones(filters: BrowseFilters) {
-  const convexProducts = useConvexQuery(api.products.listAllProducts) as
-    | any[]
-    | undefined;
-  const products = (convexProducts ?? localPhones) as any[];
+  const { products, isLoading } = useNormalizedProducts();
 
-  // Apply filters in-memory on the server-provided list
-  const applyFilters = () => {
-    let result = products.filter(
-      (p) => (p.in_stock ?? true) && !(p.is_accessory ?? false),
+  let result = products.filter(
+    (p) => p.in_stock !== false && p.is_accessory !== true,
+  );
+
+  if (filters.search?.trim()) {
+    const term = filters.search.trim().toLowerCase();
+    result = result.filter((p) =>
+      `${p.brand} ${p.model} ${p.description ?? ""}`.toLowerCase().includes(term),
     );
+  }
 
-    if (filters.search?.trim()) {
-      const term = filters.search.trim().toLowerCase();
-      result = result.filter((p) =>
-        (p.name + " " + p.brand).toLowerCase().includes(term),
-      );
-    }
+  if (filters.brands?.length) {
+    const includesBrands: string[] = [];
+    const excludeBrands: string[] = [];
 
-    if (filters.brands?.length) {
-      const includesBrands: string[] = [];
-      const excludeBrands: string[] = [];
-      for (const uiBrand of filters.brands) {
-        const mapping = BRAND_MAPPING[uiBrand];
-        if (mapping) {
-          if (mapping.exclude) excludeBrands.push(...mapping.brands);
-          else includesBrands.push(...mapping.brands);
-        } else {
-          includesBrands.push(uiBrand);
-        }
-      }
-      if (excludeBrands.length > 0 && includesBrands.length === 0) {
-        result = result.filter((r) => !excludeBrands.includes(r.brand));
-      } else if (includesBrands.length > 0) {
-        result = result.filter((r) => includesBrands.includes(r.brand));
+    for (const uiBrand of filters.brands) {
+      const mapping = BRAND_MAPPING[uiBrand];
+      if (mapping) {
+        if (mapping.exclude) excludeBrands.push(...mapping.brands);
+        else includesBrands.push(...mapping.brands);
+      } else {
+        includesBrands.push(uiBrand);
       }
     }
 
-    if (filters.storage?.length) {
-      result = result.filter((r) =>
-        filters.storage!.includes(
-          Number((r.storage || "").toString().replace(/[^0-9]/g, "")),
-        ),
-      );
+    if (excludeBrands.length > 0 && includesBrands.length === 0) {
+      result = result.filter((phone) => !excludeBrands.includes(phone.brand));
+    } else if (includesBrands.length > 0) {
+      result = result.filter((phone) => includesBrands.includes(phone.brand));
     }
+  }
 
-    if (filters.conditions?.length) {
-      const dbConditions: string[] = [];
-      for (const uiCondition of filters.conditions) {
-        const mapping = CONDITION_MAPPING[uiCondition];
-        if (mapping) dbConditions.push(...mapping);
-        else dbConditions.push(uiCondition);
-      }
-      if (dbConditions.length > 0) {
-        result = result.filter((r) =>
-          dbConditions
-            .map((c) => c.toLowerCase())
-            .includes(((r.condition || "") as string).toLowerCase()),
-        );
-      }
-    }
+  if (filters.storage?.length) {
+    result = result.filter(
+      (phone) => phone.storage_gb && filters.storage!.includes(phone.storage_gb),
+    );
+  }
 
-    if (filters.budget) {
-      result = result.filter(
-        (r) => r.price >= filters.budget!.min && r.price <= filters.budget!.max,
-      );
-    }
+  if (filters.conditions?.length) {
+    const allowed = new Set(
+      filters.conditions.flatMap((condition) => CONDITION_MAPPING[condition] ?? [condition]),
+    );
+    result = result.filter((phone) => allowed.has(phone.condition.toLowerCase()));
+  }
 
-    switch (filters.sort) {
-      case "price-low":
-        result = result.sort((a, b) => a.price - b.price);
-        break;
-      case "price-high":
-        result = result.sort((a, b) => b.price - a.price);
-        break;
-      case "newest":
-      default:
-        break;
-    }
+  if (filters.budget) {
+    result = result.filter(
+      (phone) =>
+        phone.price_birr >= filters.budget!.min &&
+        phone.price_birr <= filters.budget!.max,
+    );
+  }
 
-    return result.slice(0, 100) as unknown as Phone[];
-  };
+  switch (filters.sort) {
+    case "price-low":
+      result = [...result].sort((a, b) => a.price_birr - b.price_birr);
+      break;
+    case "price-high":
+      result = [...result].sort((a, b) => b.price_birr - a.price_birr);
+      break;
+    case "newest":
+    default:
+      break;
+  }
 
-  const data = applyFilters();
-  return { data, isLoading: convexProducts === undefined };
+  return { data: result.slice(0, 100), isLoading };
 }
 
-// Fetch phone detail via RPC
 export function usePhoneDetail(phoneId: string | null) {
-  const convexProducts = useConvexQuery(api.products.listAllProducts) as
-    | any[]
-    | undefined;
-  const products = (convexProducts ?? localPhones) as any[];
-  const found = phoneId ? products.find((p) => p.id === phoneId) || null : null;
+  const { products, isLoading } = useNormalizedProducts();
+  const found = phoneId ? products.find((phone) => phone.id === phoneId) ?? null : null;
+
+  const images = found?.main_image_url
+    ? [
+        {
+          id: `${found.id}-img-0`,
+          phone_id: found.id,
+          image_url: found.main_image_url,
+          sort_order: 0,
+        },
+      ]
+    : [];
+
   const data = (found
-    ? { phone: found, images: [], variants: [] }
-    : null) as unknown as PhoneDetail | null;
-  return { data, isLoading: convexProducts === undefined };
+    ? { phone: found, images, variants: [] }
+    : null) as PhoneDetail | null;
+
+  return { data, isLoading };
 }
 
-// Fetch filter options from views
+export function useProductsByIds(ids: string[]) {
+  const { products, isLoading } = useNormalizedProducts();
+  const idSet = new Set(ids);
+  return {
+    data: products.filter((product) => idSet.has(product.id)),
+    isLoading,
+  };
+}
+
 export function useFilterBrands() {
-  const convexProducts = useConvexQuery(api.products.listAllProducts) as
-    | any[]
-    | undefined;
-  const products = (convexProducts ?? localPhones) as any[];
-  const data = Array.from(new Set(products.map((p) => p.brand))).filter(
-    Boolean,
-  ) as string[];
-  return { data, isLoading: convexProducts === undefined };
+  const { products, isLoading } = useNormalizedProducts();
+  const data = Array.from(new Set(products.map((p) => p.brand))).filter(Boolean);
+  return { data, isLoading };
 }
 
 export function useFilterStorage() {
-  const convexProducts = useConvexQuery(api.products.listAllProducts) as
-    | any[]
-    | undefined;
-  const products = (convexProducts ?? localPhones) as any[];
-  const storage = Array.from(
-    new Set(
-      products.map((p) =>
-        Number((p.storage || "").toString().replace(/[^0-9]/g, "")),
-      ),
-    ),
-  )
-    .filter(Boolean)
-    .sort((a, b) => a - b);
-  return { data: storage as number[], isLoading: convexProducts === undefined };
+  const { products, isLoading } = useNormalizedProducts();
+  const data = Array.from(
+    new Set(products.map((p) => p.storage_gb).filter((value): value is number => !!value)),
+  ).sort((a, b) => a - b);
+  return { data, isLoading };
 }
 
 export function useFilterConditions() {
-  const convexProducts = useConvexQuery(api.products.listAllProducts) as
-    | any[]
-    | undefined;
-  const products = (convexProducts ?? localPhones) as any[];
-  const conds = Array.from(new Set(products.map((p) => p.condition))).filter(
-    Boolean,
-  ) as string[];
-  return { data: conds, isLoading: convexProducts === undefined };
+  const { products, isLoading } = useNormalizedProducts();
+  const data = Array.from(new Set(products.map((p) => p.condition))).filter(Boolean);
+  return { data, isLoading };
 }

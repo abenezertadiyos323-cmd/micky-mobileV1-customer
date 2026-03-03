@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Heart, Loader2 } from 'lucide-react';
-import { ProductCard } from '../ProductCard';
-import { ProductDetail } from '../ProductDetail';
-import { useApp } from '@/contexts/AppContext';
-import { useFavorites, favoriteToPhone } from '@/hooks/useFavorites';
-import type { Phone } from '@/types/phone';
+import { useMemo, useState } from "react";
+import { Heart, Loader2 } from "lucide-react";
+import { ProductCard } from "../ProductCard";
+import { ProductDetail } from "../ProductDetail";
+import { useApp } from "@/contexts/AppContext";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useProductsByIds } from "@/hooks/usePhones";
+import { mapToProductVM, type ProductVM } from "@/lib/mapProduct";
 
 interface SavedTabProps {
   onNavigateToExchange: () => void;
@@ -12,27 +13,68 @@ interface SavedTabProps {
 
 export function SavedTab({ onNavigateToExchange }: SavedTabProps) {
   const { sessionId } = useApp();
-  const { data: favorites = [], isLoading } = useFavorites(sessionId);
-  const [selectedPhoneId, setSelectedPhoneId] = useState<string | null>(null);
-  const [selectedPhone, setSelectedPhone] = useState<Phone | null>(null);
+  const { data: favorites = [], isLoading: favoritesLoading } = useFavorites(sessionId);
+  const favoriteIds = useMemo(
+    () => favorites.map((favorite) => favorite.phoneId),
+    [favorites],
+  );
+  const { data: products = [], isLoading: productsLoading } = useProductsByIds(favoriteIds);
 
-  const savedPhonesList = favorites.map(favoriteToPhone);
+  const productsById = useMemo(
+    () =>
+      new Map(
+        products.map((product) => [
+          product.id,
+          mapToProductVM(product as unknown as Record<string, unknown>),
+        ]),
+      ),
+    [products],
+  );
 
-  const handlePhoneClick = (phone: Phone) => {
-    setSelectedPhone(phone);
-    setSelectedPhoneId(phone.id);
+  const savedProducts = useMemo(
+    () =>
+      favoriteIds.map((id) => {
+        const mapped = productsById.get(id);
+        return (
+          mapped ?? {
+            id,
+            title: "Saved Item",
+            priceBirr: 0,
+            imageUrl: "/placeholder.svg",
+            inStock: true,
+            condition: "Used",
+            brand: "Phone",
+            model: "Item",
+          }
+        );
+      }),
+    [favoriteIds, productsById],
+  );
+
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductVM | null>(null);
+
+  const handleProductClick = (product: ProductVM) => {
+    setSelectedProduct(product);
+    setSelectedProductId(product.id);
   };
 
-  if (selectedPhoneId) {
+  if (selectedProductId) {
     return (
       <ProductDetail
-        phoneId={selectedPhoneId}
-        phone={selectedPhone || undefined}
-        onBack={() => { setSelectedPhoneId(null); setSelectedPhone(null); }}
+        phoneId={selectedProductId}
+        product={selectedProduct || undefined}
+        onBack={() => {
+          setSelectedProductId(null);
+          setSelectedProduct(null);
+        }}
         onExchange={onNavigateToExchange}
+        sourceTab="saved"
       />
     );
   }
+
+  const isLoading = favoritesLoading || productsLoading;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -40,7 +82,7 @@ export function SavedTab({ onNavigateToExchange }: SavedTabProps) {
         <div className="p-4">
           <h1 className="text-xl font-bold text-foreground">Saved Phones</h1>
           <p className="text-sm text-muted-foreground">
-            {savedPhonesList.length} {savedPhonesList.length === 1 ? 'item' : 'items'} saved
+            {savedProducts.length} {savedProducts.length === 1 ? "item" : "items"} saved
           </p>
         </div>
       </header>
@@ -50,7 +92,7 @@ export function SavedTab({ onNavigateToExchange }: SavedTabProps) {
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : savedPhonesList.length === 0 ? (
+        ) : savedProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4">
               <Heart className="w-10 h-10 text-muted-foreground" />
@@ -62,8 +104,13 @@ export function SavedTab({ onNavigateToExchange }: SavedTabProps) {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {savedPhonesList.map((phone, index) => (
-              <ProductCard key={phone.id} phone={phone} onClick={() => handlePhoneClick(phone)} index={index} />
+            {savedProducts.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onClick={() => handleProductClick(product)}
+                index={index}
+              />
             ))}
           </div>
         )}

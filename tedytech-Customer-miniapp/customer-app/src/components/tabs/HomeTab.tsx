@@ -13,10 +13,10 @@ import {
   useAccessories,
   useBrowsePhones,
 } from "@/hooks/usePhones";
-import { useFavorites } from "@/hooks/useFavorites";
-import { useSession } from "@/hooks/useSession";
 import type { Phone } from "@/types/phone";
 import tedMobileLogo from "@/assets/ted-mobile-logo-88.webp";
+import { mapToProductVM, type ProductVM } from "@/lib/mapProduct";
+import type { LeadSourceTab } from "@/hooks/usePhoneActions";
 
 const ProductDetail = lazy(() =>
   import("../ProductDetail").then((m) => ({ default: m.ProductDetail })),
@@ -47,9 +47,10 @@ export function HomeTab({
     selectedStorageFilters,
     selectedConditions,
     sortOption,
+    favoritePhoneIds,
   } = useApp();
-  const { sessionId } = useSession();
-  const { data: favorites = [] } = useFavorites(sessionId);
+  // Use favoritePhoneIds length from AppContext (single session source of truth)
+  const favorites = favoritePhoneIds;
   const { data: newArrivals = [], isLoading: loadingNew } = useNewArrivals(10);
   const { data: popularPhones = [], isLoading: loadingPopular } =
     usePopularPhones(10);
@@ -69,7 +70,8 @@ export function HomeTab({
   });
 
   const [selectedPhoneId, setSelectedPhoneId] = useState<string | null>(null);
-  const [selectedPhone, setSelectedPhone] = useState<Phone | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductVM | null>(null);
+  const [selectedSourceTab, setSelectedSourceTab] = useState<LeadSourceTab>("home");
   const [filterSheet, setFilterSheet] = useState<"brand" | "budget" | null>(
     null,
   );
@@ -94,7 +96,8 @@ export function HomeTab({
   };
 
   const handlePhoneClick = (phone: Phone) => {
-    setSelectedPhone(phone);
+    setSelectedSourceTab(searchQuery.trim() ? "search" : "home");
+    setSelectedProduct(mapToProductVM(phone as unknown as Record<string, unknown>));
     setSelectedPhoneId(phone.id);
   };
 
@@ -109,12 +112,13 @@ export function HomeTab({
       >
         <ProductDetail
           phoneId={selectedPhoneId}
-          phone={selectedPhone || undefined}
+          product={selectedProduct || undefined}
           onBack={() => {
             setSelectedPhoneId(null);
-            setSelectedPhone(null);
+            setSelectedProduct(null);
           }}
           onExchange={onNavigateToExchange}
+          sourceTab={selectedSourceTab}
         />
       </Suspense>
     );

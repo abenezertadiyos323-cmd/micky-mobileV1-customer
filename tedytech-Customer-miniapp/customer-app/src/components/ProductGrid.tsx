@@ -2,6 +2,7 @@ import { Phone } from '@/types/phone';
 import { ProductCard } from './ProductCard';
 import { useApp } from '@/contexts/AppContext';
 import { Package, Loader2 } from 'lucide-react';
+import { mapToProductVM } from '@/lib/mapProduct';
 
 interface ProductGridProps {
   newArrivals?: Phone[];
@@ -45,7 +46,7 @@ export function ProductGrid({
               {newArrivals.slice(0, 6).map((phone, index) => (
                 <ProductCard 
                   key={phone.id} 
-                  phone={phone} 
+                  product={mapToProductVM(phone as unknown as Record<string, unknown>)}
                   onClick={() => onProductClick(phone)}
                   index={index}
                 />
@@ -62,7 +63,7 @@ export function ProductGrid({
               {popularPhones.slice(0, 6).map((phone, index) => (
                 <ProductCard 
                   key={phone.id} 
-                  phone={phone} 
+                  product={mapToProductVM(phone as unknown as Record<string, unknown>)}
                   onClick={() => onProductClick(phone)}
                   index={index + newArrivals.length}
                 />
@@ -122,7 +123,7 @@ export function ProductGrid({
         {displayPhones.map((phone, index) => (
           <ProductCard 
             key={phone.id} 
-            phone={phone} 
+            product={mapToProductVM(phone as unknown as Record<string, unknown>)}
             onClick={() => onProductClick(phone)}
             index={index}
           />

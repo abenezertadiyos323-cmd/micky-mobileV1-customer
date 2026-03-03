@@ -340,16 +340,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     debugLog("poll started", { hasStoredId: !!storedTelegramUserId });
 
+    // Gate: log initData length exactly once across all poll iterations.
+    let initDataLoggedOnce = false;
+
     function poll() {
       if (cancelled) return;
       try {
         const tg = getTgWebApp();
+        const initDataLen = tg?.initData?.length ?? 0;
 
-        // Detect presence strictly via Boolean(window.Telegram?.WebApp).
-        // Do not gate detection on initData content.
-        // Empty initData can still happen in valid Telegram contexts.
-        if (Boolean(tg)) {
-          debugLog("telegram WebApp detected");
+        // One-time log — always emitted (not gated by IS_DEBUG) so it appears
+        // in Vercel logs and makes the crash reason immediately obvious.
+        if (!initDataLoggedOnce) {
+          initDataLoggedOnce = true;
+          console.log("[TG] initData length:", initDataLen);
+        }
+
+        // Gate requires BOTH a valid WebApp object AND non-empty initData.
+        // Empty initData means the app was opened via a direct URL or in
+        // Telegram's in-app browser (not as a proper miniapp launch).
+        // We keep polling until the timeout so initData has time to arrive
+        // in edge cases where it loads slightly after the WebApp object.
+        if (Boolean(tg) && initDataLen > 0) {
+          debugLog("telegram WebApp detected with initData", { initDataLen });
           tg.ready?.();
           tg.expand?.();
           applyTheme(tg.themeParams);
@@ -384,10 +397,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // Still waiting for WebApp injection
+        // WebApp absent, or present but initData still empty — keep waiting.
         if (Date.now() - startMs >= MAX_WAIT_MS) {
           if (!cancelled) {
-            debugLog("state transition: checking → needs_telegram (timeout)");
+            debugLog("state transition: checking → needs_telegram (timeout)", {
+              hasTg: Boolean(tg),
+              initDataLen,
+            });
             setCheckState("needs_telegram");
           }
           return;

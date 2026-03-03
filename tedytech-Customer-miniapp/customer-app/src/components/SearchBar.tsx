@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { Search, X, Menu, Clock, TrendingUp, Flame, Star } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useSearchPanelData, useLogSearch } from "@/hooks/useSearch";
-import { useSession } from "@/hooks/useSession";
 import type { Phone } from "@/types/phone";
 
 interface SearchBarProps {
@@ -11,8 +10,7 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
-  const { searchQuery, setSearchQuery } = useApp();
-  const { sessionId } = useSession();
+  const { searchQuery, setSearchQuery, sessionId } = useApp();
   const { data: searchPanelData } = useSearchPanelData();
   const logSearch = useLogSearch(sessionId);
 
