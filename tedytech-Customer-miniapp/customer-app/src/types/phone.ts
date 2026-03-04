@@ -40,6 +40,15 @@ export interface Phone {
   negotiable: boolean | null;
   key_highlights: string[] | null;
   key_specs: Record<string, unknown> | null;
+  // Optional spec fields — added 2026-03-04, backward compatible
+  screenSize?: string;
+  battery?: string;
+  mainCamera?: string;
+  selfieCamera?: string;
+  simType?: string;
+  operatingSystem?: string;
+  features?: string;
+  images?: string[];
   created_at: string | null;
   updated_at: string | null;
 }
