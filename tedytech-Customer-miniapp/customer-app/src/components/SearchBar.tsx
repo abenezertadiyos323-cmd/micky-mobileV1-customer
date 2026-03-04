@@ -161,7 +161,14 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
   return (
     <div ref={containerRef} className="relative">
       <div className="relative flex items-center">
-        <Search className="absolute left-4 w-5 h-5 text-muted-foreground pointer-events-none" />
+        <button
+          onClick={() => { handleClear(); inputRef.current?.blur(); }}
+          aria-label="Close search"
+          className="absolute left-2 p-2 hover:bg-muted rounded-full transition-colors"
+        >
+          <X className="w-4 h-4 text-muted-foreground" />
+        </button>
+        <Search className="absolute left-12 w-5 h-5 text-muted-foreground pointer-events-none" />
         <input
           ref={inputRef}
           type="text"
@@ -170,7 +177,7 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
           onChange={(e) => handleInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
-          className="w-full h-12 pl-12 pr-20 bg-card rounded-2xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+          className="w-full h-12 pl-20 pr-20 bg-card rounded-2xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
         />
         <div className="absolute right-2 flex items-center gap-1">
           {localQuery && (
