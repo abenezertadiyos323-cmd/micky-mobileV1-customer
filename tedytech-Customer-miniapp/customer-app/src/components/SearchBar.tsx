@@ -161,14 +161,7 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
   return (
     <div ref={containerRef} className="relative">
       <div className="relative flex items-center">
-        <button
-          onClick={() => { handleClear(); inputRef.current?.blur(); }}
-          aria-label="Close search"
-          className="absolute left-2 p-2 hover:bg-muted rounded-full transition-colors"
-        >
-          <X className="w-4 h-4 text-muted-foreground" />
-        </button>
-        <Search className="absolute left-12 w-5 h-5 text-muted-foreground pointer-events-none" />
+        <Search className="absolute left-4 w-5 h-5 text-muted-foreground pointer-events-none" />
         <input
           ref={inputRef}
           type="text"
@@ -177,7 +170,7 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
           onChange={(e) => handleInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
-          className="w-full h-12 pl-20 pr-20 bg-card rounded-2xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+          className="w-full h-12 pl-12 pr-20 bg-card rounded-2xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
         />
         <div className="absolute right-2 flex items-center gap-1">
           {localQuery && (
@@ -211,8 +204,20 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
 
       {/* Focus screen - Recent/Hot/Top/Trending */}
       {showFocusScreen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-2xl border border-border shadow-lg z-50 overflow-hidden animate-fade-in max-h-[70vh] overflow-y-auto">
-          {/* Recent Searches */}
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-2xl border border-border shadow-lg z-50 overflow-hidden animate-fade-in">
+          <div className="max-h-[70vh] overflow-y-auto">
+            {/* Sticky header with X button */}
+            <div className="sticky top-0 z-10 bg-card flex justify-end px-3 py-2 border-b border-border">
+              <button
+                onClick={() => { handleClear(); inputRef.current?.blur(); }}
+                aria-label="Close search"
+                className="w-8 h-8 flex items-center justify-center hover:bg-muted rounded-full transition-colors"
+              >
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            {/* Recent Searches */}
           {recentSearches.length > 0 && (
             <div className="p-4 border-b border-border">
               <div className="flex items-center gap-2 mb-3">
@@ -304,15 +309,16 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
             </div>
           )}
 
-          {/* Fallback if no data */}
-          {hotSearches.length === 0 &&
-            topSearches.length === 0 &&
-            trendingSearches.length === 0 &&
-            recentSearches.length === 0 && (
-              <div className="p-4 text-center text-muted-foreground text-sm">
-                Start typing to search for phones...
-              </div>
-            )}
+            {/* Fallback if no data */}
+            {hotSearches.length === 0 &&
+              topSearches.length === 0 &&
+              trendingSearches.length === 0 &&
+              recentSearches.length === 0 && (
+                <div className="p-4 text-center text-muted-foreground text-sm">
+                  Start typing to search for phones...
+                </div>
+              )}
+          </div>
         </div>
       )}
     </div>
