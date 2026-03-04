@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, X, Menu, Clock, TrendingUp, Flame, Star } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
-import { useSearchPanelData, useLogSearch } from "@/hooks/useSearch";
+import { useSearchPanelData, useLogSearch, useSearchProducts } from "@/hooks/useSearch";
+import { useDebounce } from "@/hooks/useDebounce";
+import { SearchResultsDropdown } from "./SearchResultsDropdown";
 import type { Phone } from "@/types/phone";
 
 interface SearchBarProps {
@@ -18,6 +20,17 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isSearchApplied, setIsSearchApplied] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Debounce the local query for live search (250ms)
+  const debouncedQuery = useDebounce(localQuery, 250);
+
+  // Fetch search results based on debounced query
+  const { data: searchResults = [], isLoading: isSearching } = useSearchProducts(
+    debouncedQuery.length >= 2 ? debouncedQuery : null,
+    { limit: 8 }
+  );
+
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem("tedytech-recent-searches");
@@ -50,6 +63,7 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
         !containerRef.current.contains(e.target as Node)
       ) {
         setShowSuggestions(false);
+        setShowSearchResults(false);
         setIsFocused(false);
       }
     };
@@ -59,7 +73,8 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
 
   const handleInputChange = (value: string) => {
     setLocalQuery(value);
-    setShowSuggestions(true);
+    setShowSuggestions(false);
+    setShowSearchResults(value.length >= 2);
     setIsSearchApplied(false);
   };
 
@@ -70,6 +85,7 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && localQuery.trim()) {
+      e.preventDefault();
       executeSearch(localQuery);
     }
   };
@@ -77,10 +93,17 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
   const executeSearch = (term: string) => {
     setSearchQuery(term);
     setShowSuggestions(false);
+    setShowSearchResults(false);
     setIsSearchApplied(true);
     addToRecentSearches(term);
     logSearch.mutate(term);
     inputRef.current?.blur();
+  };
+
+  const handleSelectSearchResult = (phone: Phone) => {
+    setShowSearchResults(false);
+    setShowSuggestions(false);
+    onSelectPhone(phone);
   };
 
   const addToRecentSearches = (term: string) => {
@@ -102,6 +125,7 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
     setSearchQuery("");
     setIsSearchApplied(false);
     setShowSuggestions(false);
+    setShowSearchResults(false);
   };
 
   const showFocusScreen = isFocused && !localQuery.trim();
@@ -139,6 +163,16 @@ export function SearchBar({ onOpenFilters, onSelectPhone }: SearchBarProps) {
           </button>
         </div>
       </div>
+
+      {/* Search Results Dropdown - Live search while typing */}
+      {showSearchResults && (
+        <SearchResultsDropdown
+          results={searchResults as Phone[]}
+          isLoading={isSearching}
+          query={localQuery}
+          onSelectResult={handleSelectSearchResult}
+        />
+      )}
 
       {/* Focus screen - Recent/Hot/Top/Trending */}
       {showFocusScreen && (
