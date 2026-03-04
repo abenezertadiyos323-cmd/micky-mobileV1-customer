@@ -5,11 +5,20 @@ export interface ProductVM {
   title: string;
   priceBirr: number;
   imageUrl: string;
+  mainImageUrl?: string | null;
+  images?: string[];
   inStock: boolean;
   condition: string;
   brand: string;
   model: string;
   storageGb?: number | null;
+  screenSize?: string;
+  battery?: string;
+  mainCamera?: string;
+  selfieCamera?: string;
+  simType?: string;
+  operatingSystem?: string;
+  features?: string;
 }
 
 function normalizeString(value: unknown, fallback = ""): string {
@@ -88,16 +97,54 @@ export function mapToProductVM(raw: Record<string, unknown>): ProductVM {
 
   const storageGb = normalizeNumber(raw.storage_gb, 0) || undefined;
 
+  const screenSize =
+    typeof raw.screenSize === "string" && raw.screenSize.trim()
+      ? raw.screenSize.trim()
+      : undefined;
+  const battery =
+    typeof raw.battery === "string" && raw.battery.trim()
+      ? raw.battery.trim()
+      : undefined;
+  const mainCamera =
+    typeof raw.mainCamera === "string" && raw.mainCamera.trim()
+      ? raw.mainCamera.trim()
+      : undefined;
+  const selfieCamera =
+    typeof raw.selfieCamera === "string" && raw.selfieCamera.trim()
+      ? raw.selfieCamera.trim()
+      : undefined;
+  const simType =
+    typeof raw.simType === "string" && raw.simType.trim()
+      ? raw.simType.trim()
+      : undefined;
+  const operatingSystem =
+    typeof raw.operatingSystem === "string" && raw.operatingSystem.trim()
+      ? raw.operatingSystem.trim()
+      : undefined;
+  const features =
+    typeof raw.features === "string" && raw.features.trim()
+      ? raw.features.trim()
+      : undefined;
+
   return {
     id,
     title,
     priceBirr,
     imageUrl,
+    mainImageUrl: imageUrl || null,
+    images: images.length > 0 ? images : undefined,
     inStock,
     condition,
     brand,
     model,
     storageGb: storageGb,
+    screenSize,
+    battery,
+    mainCamera,
+    selfieCamera,
+    simType,
+    operatingSystem,
+    features,
   };
 }
 
@@ -124,6 +171,14 @@ export function productVMToPhone(vm: ProductVM): Phone {
     negotiable: null,
     key_highlights: null,
     key_specs: null,
+    screenSize: vm.screenSize,
+    battery: vm.battery,
+    mainCamera: vm.mainCamera,
+    selfieCamera: vm.selfieCamera,
+    simType: vm.simType,
+    operatingSystem: vm.operatingSystem,
+    features: vm.features,
+    images: vm.images,
     created_at: null,
     updated_at: null,
   };
