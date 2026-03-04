@@ -41,13 +41,11 @@ export function useLogSearch(sessionId: string | null) {
 
 export function useSearchProducts(
   term: string | null,
-  opts?: { limit?: number; category?: string | null; status?: string | null },
+  opts?: { limit?: number },
 ) {
   const args = {
     term: term ?? undefined,
-    limit: opts?.limit ?? 24,
-    category: opts?.category ?? undefined,
-    status: opts?.status ?? undefined,
+    limit: opts?.limit ?? 8,
   } as any;
 
   const data = useConvexQuery(api.search.searchProducts, args);
