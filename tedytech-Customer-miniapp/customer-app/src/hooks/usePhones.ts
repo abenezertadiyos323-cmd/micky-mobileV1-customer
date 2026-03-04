@@ -117,6 +117,23 @@ function normalizePhone(raw: RawProduct): Phone {
         : typeof raw.updatedAt === "number"
           ? new Date(raw.updatedAt).toISOString()
           : null,
+    // Spec fields: read directly from raw Convex data
+    screenSize: typeof raw.screenSize === "string" ? raw.screenSize : undefined,
+    battery: typeof raw.battery === "string" ? raw.battery : undefined,
+    mainCamera: typeof raw.mainCamera === "string" ? raw.mainCamera : undefined,
+    selfieCamera: typeof raw.selfieCamera === "string" ? raw.selfieCamera : undefined,
+    simType: typeof raw.simType === "string" ? raw.simType : undefined,
+    operatingSystem:
+      typeof raw.operatingSystem === "string" ? raw.operatingSystem : undefined,
+    features: typeof raw.features === "string" ? raw.features : undefined,
+    // Images: sanitize, trim, drop empty, cap to 6
+    images: Array.isArray(raw.images)
+      ? (raw.images as unknown[])
+          .filter((u): u is string => typeof u === "string")
+          .map((u) => u.trim())
+          .filter((u) => u.length > 0)
+          .slice(0, 6)
+      : undefined,
   };
 }
 
