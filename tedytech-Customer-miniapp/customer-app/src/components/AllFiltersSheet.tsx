@@ -62,6 +62,11 @@ export function AllFiltersSheet({ isOpen, onClose }: AllFiltersSheetProps) {
     clearFilters
   } = useApp();
 
+  const hasActiveFilters = selectedBrands.length > 0
+    || selectedBudget !== null
+    || selectedStorageFilters.length > 0
+    || selectedConditions.length > 0;
+
   // Lock body scroll when sheet is open
   useEffect(() => {
     if (isOpen) {
@@ -106,6 +111,22 @@ export function AllFiltersSheet({ isOpen, onClose }: AllFiltersSheetProps) {
     }
   };
 
+  const removeBrand = (brandLabel: string) => {
+    setSelectedBrands(selectedBrands.filter(b => b !== brandLabel));
+  };
+
+  const removeBudget = () => {
+    setSelectedBudget(null);
+  };
+
+  const removeStorage = (storageGB: number) => {
+    setSelectedStorageFilters(selectedStorageFilters.filter(s => s !== storageGB));
+  };
+
+  const removeCondition = (conditionLabel: string) => {
+    setSelectedConditions(selectedConditions.filter(c => c !== conditionLabel));
+  };
+
   const handleReset = () => {
     clearFilters();
   };
@@ -139,6 +160,97 @@ export function AllFiltersSheet({ isOpen, onClose }: AllFiltersSheetProps) {
         
         {/* Content - scrollable with mobile-friendly behavior */}
         <div className="flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] p-4 pb-8 space-y-6">
+          {/* Selected Filters Summary - only visible when filters active */}
+          {hasActiveFilters && (
+            <div className="border-b border-border pb-3 mb-3 animate-fade-in" style={{ animationDelay: '0.02s' }}>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-foreground">Selected Filters</h4>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearFilters();
+                  }}
+                  className="flex items-center gap-1 text-xs font-medium text-destructive hover:text-destructive/80 transition-colors"
+                >
+                  Clear all
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Chips container - flex wrap layout */}
+              <div className="flex flex-wrap gap-2">
+                {/* Brand chips */}
+                {selectedBrands.map((brand) => (
+                  <button
+                    key={`brand-${brand}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeBrand(brand);
+                    }}
+                    className={cn(
+                      "flex items-center gap-1 border border-primary bg-primary/10 text-primary rounded-full px-3 py-1.5 text-sm transition-all duration-200 hover:bg-primary/20",
+                    )}
+                  >
+                    {brand}
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                ))}
+
+                {/* Budget chip */}
+                {selectedBudget && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeBudget();
+                    }}
+                    className={cn(
+                      "flex items-center gap-1 border border-primary bg-primary/10 text-primary rounded-full px-3 py-1.5 text-sm transition-all duration-200 hover:bg-primary/20",
+                    )}
+                  >
+                    {budgetRanges.find(
+                      (r) => r.min === selectedBudget.min && r.max === selectedBudget.max
+                    )?.label || `${selectedBudget.min}–${selectedBudget.max}`}
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+
+                {/* Storage chips */}
+                {selectedStorageFilters.map((storage) => (
+                  <button
+                    key={`storage-${storage}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeStorage(storage);
+                    }}
+                    className={cn(
+                      "flex items-center gap-1 border border-primary bg-primary/10 text-primary rounded-full px-3 py-1.5 text-sm transition-all duration-200 hover:bg-primary/20",
+                    )}
+                  >
+                    {storage}GB
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                ))}
+
+                {/* Condition chips */}
+                {selectedConditions.map((condition) => (
+                  <button
+                    key={`condition-${condition}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeCondition(condition);
+                    }}
+                    className={cn(
+                      "flex items-center gap-1 border border-primary bg-primary/10 text-primary rounded-full px-3 py-1.5 text-sm transition-all duration-200 hover:bg-primary/20",
+                    )}
+                  >
+                    {condition}
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Sort */}
           <div className="animate-fade-in" style={{ animationDelay: '0.05s' }}>
             <div className="flex items-center gap-2 mb-3">
