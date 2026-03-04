@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { ArrowLeft, Heart, ShoppingBag, RefreshCw, Check, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { usePhoneDetail } from '@/hooks/usePhones';
@@ -89,6 +89,22 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
     if (imageUrls.length <= 1) return;
     setImageDirection('left');
     setCurrentImageIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
+  };
+
+  // Touch swipe support for image gallery
+  const touchStartX = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(delta) < 40) return; // ignore tiny movements
+    if (delta > 0) prevImage();
+    else nextImage();
   };
 
   const handleSave = () => {
@@ -185,18 +201,21 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
       </div>
 
       {/* Image Gallery */}
-      <div className="relative aspect-square bg-muted overflow-hidden">
-        {imageUrls.length > 0 && (
-          <img
-            key={currentImageIndex}
-            src={imageUrls[currentImageIndex]}
-            alt={displayName}
-            className={cn(
-              "w-full h-full object-cover",
-              imageDirection === 'right' ? "animate-slide-in-left" : "animate-slide-in-right"
-            )}
-          />
-        )}
+      <div
+        className="relative aspect-square bg-muted overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        <img
+          key={currentImageIndex}
+          src={imageUrls.length > 0 ? imageUrls[currentImageIndex] : "/placeholder.svg"}
+          alt={displayName}
+          className={cn(
+            "w-full h-full object-cover",
+            imageUrls.length > 0 && (imageDirection === 'right' ? "animate-slide-in-left" : "animate-slide-in-right")
+          )}
+          onError={(e) => { e.currentTarget.src = "/placeholder.svg"; }}
+        />
 
         {/* Navigation Arrows */}
         {imageUrls.length > 1 && (
@@ -282,14 +301,14 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
         {rawPhone && (
           (() => {
             const specsRows = [
-              { label: 'RAM', value: (rawPhone as any)?.ram },
-              { label: 'Screen Size', value: (rawPhone as any)?.screenSize },
-              { label: 'Battery', value: (rawPhone as any)?.battery },
-              { label: 'Main Camera', value: (rawPhone as any)?.mainCamera },
-              { label: 'Selfie Camera', value: (rawPhone as any)?.selfieCamera },
-              { label: 'SIM Type', value: (rawPhone as any)?.simType },
-              { label: 'Color', value: (rawPhone as any)?.color },
-              { label: 'Operating System', value: (rawPhone as any)?.operatingSystem },
+              { label: 'RAM', value: rawPhone?.ram },
+              { label: 'Screen Size', value: rawPhone?.screenSize },
+              { label: 'Battery', value: rawPhone?.battery },
+              { label: 'Main Camera', value: rawPhone?.mainCamera },
+              { label: 'Selfie Camera', value: rawPhone?.selfieCamera },
+              { label: 'SIM Type', value: rawPhone?.simType },
+              { label: 'Color', value: rawPhone?.color },
+              { label: 'Operating System', value: rawPhone?.operatingSystem },
             ].filter(s => s.value);
 
             return specsRows.length > 0 && (
@@ -309,12 +328,30 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
         )}
 
         {/* 6. Features */}
-        {(rawPhone as any)?.features && (
-          <div className="animate-fade-in" style={{ animationDelay: '0.45s' }}>
-            <h3 className="font-semibold text-foreground mb-2">Features</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{(rawPhone as any).features}</p>
-          </div>
-        )}
+        {rawPhone?.features && (() => {
+          const featureLines = rawPhone.features
+            .split("\n")
+            .map((l) => l.trim())
+            .filter(Boolean);
+          if (featureLines.length === 0) return null;
+          return (
+            <div className="animate-fade-in" style={{ animationDelay: '0.45s' }}>
+              <h3 className="font-semibold text-foreground mb-2">Features</h3>
+              {featureLines.length > 1 ? (
+                <ul className="space-y-1.5 list-none">
+                  {featureLines.map((line, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground leading-relaxed">{featureLines[0]}</p>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Key Highlights */}
         {highlights.length > 0 && (
