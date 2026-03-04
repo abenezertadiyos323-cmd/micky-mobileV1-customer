@@ -102,6 +102,7 @@ export function productVMToPhone(vm: ProductVM): Phone {
     id: vm.id,
     brand: vm.brand,
     model: vm.model,
+    ram: null,
     storage_gb: null,
     price_birr: vm.priceBirr,
     old_price_birr: null,

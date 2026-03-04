@@ -22,6 +22,7 @@ export interface Phone {
   id: string;
   brand: string;
   model: string;
+  ram: string | null;
   storage_gb: number | null;
   price_birr: number;
   old_price_birr: number | null;

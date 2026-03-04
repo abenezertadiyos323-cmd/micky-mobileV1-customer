@@ -27,6 +27,7 @@ function normalizePhone(raw: RawProduct): Phone {
 
   return {
     ...base,
+    ram: typeof raw.ram === "string" ? raw.ram : null,
     storage_gb: parseStorageGb(raw.storage_gb ?? raw.storage),
     old_price_birr:
       typeof raw.old_price_birr === "number"

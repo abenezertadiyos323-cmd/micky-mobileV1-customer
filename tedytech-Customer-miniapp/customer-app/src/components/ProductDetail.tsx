@@ -313,6 +313,39 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
           </div>
         )}
 
+        {/* Specifications */}
+        {(rawPhone?.ram || rawPhone?.storage_gb || product.condition || rawPhone?.exchange_available) && (
+          <div className="bg-surface-section rounded-2xl p-4 border border-border animate-fade-in hover-lift" style={{ animationDelay: '0.25s' }}>
+            <h3 className="font-semibold text-foreground mb-4">Specifications</h3>
+            <ul className="space-y-3">
+              {rawPhone?.ram && (
+                <li className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">RAM</span>
+                  <span className="text-sm font-medium text-foreground">{rawPhone.ram}</span>
+                </li>
+              )}
+              {rawPhone?.storage_gb && (
+                <li className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Storage</span>
+                  <span className="text-sm font-medium text-foreground">{rawPhone.storage_gb}GB</span>
+                </li>
+              )}
+              {product.condition && (
+                <li className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Condition</span>
+                  <span className="text-sm font-medium text-foreground">{getConditionLabel(product.condition)}</span>
+                </li>
+              )}
+              {rawPhone?.exchange_available !== undefined && rawPhone?.exchange_available !== null && (
+                <li className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Exchange Available</span>
+                  <span className="text-sm font-medium text-foreground">{rawPhone.exchange_available ? 'Yes' : 'No'}</span>
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+
         {/* Key Highlights */}
         {highlights.length > 0 && (
           <div className="bg-surface-section rounded-2xl p-4 border border-border animate-fade-in hover-lift" style={{ animationDelay: '0.25s' }}>
