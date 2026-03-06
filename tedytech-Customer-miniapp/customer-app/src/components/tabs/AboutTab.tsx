@@ -18,6 +18,7 @@ interface FaqItem {
   id: string;
   title: string;
   content: string;
+  contentAm?: string;
   hasExchangeButton?: boolean;
 }
 
@@ -28,9 +29,71 @@ interface Translations {
   chipFast: string;
   chipWarranty: string;
   faqTitle: string;
-  faq: FaqItem[];
   goToExchange: string;
 }
+
+// ─── Bilingual FAQ items ────────────────────────────────────────────────────
+// English content is first. contentAm = exact Amharic text provided by store owner.
+// Do NOT modify contentAm strings — paste only, no rewrites.
+const faqItems: FaqItem[] = [
+  {
+    id: 'item-1',
+    title: "📦 1 Year Warranty — What's Covered?",
+    content:
+      "All phones sold at TedyTech come with a 1-year warranty covering manufacturing defects, hardware failures, and battery issues.\n\n• Covered: factory defects, hardware faults, battery degradation.\n• NOT covered: cracked screens, water damage, physical misuse.\n\nTo make a claim, bring your receipt and the phone to our Addis Ababa store.",
+    contentAm:
+      "📦 የ1 ዓመት ዋስትና — ምን ምን ያካትታል?\n\nበTedyTech የሚሸጡ ሁሉም ስልኮች ከፋብሪካ የሚመጡ የቴክኒክ ጉድለቶችን፣ የሃርድዌር ብልሽቶችን እና የባትሪ ችግሮችን የሚሸፍን የ1 ዓመት ዋስትና አላቸው።\n\n• የሚካተቱት፦ የፋብሪካ ጉድለቶች፣ የሃርድዌር ብልሽቶች፣ የባትሪ መበላሸት።\n• የማይካተቱት፦ የተሰበረ ስክሪን፣ በውሃ የደረሰ ጉዳት፣ በአጠቃቀም ስህተት የሚመጡ ጉዳቶች።\n\nአገልግሎቱን ለማግኘት፣ ደረሰኝዎን እና ስልኩን አዲስ አበባ በሚገኘው ሱቃችን ይዘው ይምጡ።",
+  },
+  {
+    id: 'item-2',
+    title: '🔄 Return & Refund Policy',
+    content:
+      "Returns are accepted within 48 hours of purchase if the phone has a defect we missed.\n\n• Phone must be in the same condition as sold — unused, no physical damage.\n• Bring your original receipt.\n• After 48 hours: no cash refunds. We offer store credit or an exchange.",
+    contentAm:
+      "🔄 የእቃ መመለስ እና የገንዘብ ተመላሽ ፖሊሲ\n\nስልኩ እኛ ያላስተዋልነው የቴክኒክ ችግር (Defect) ካለበት፣ ከተገዛበት ቀን ጀምሮ በ48 ሰዓታት ውስጥ መመለስ ይቻላል።\n\n• ስልኩ በተሸጠበት ሁኔታ መሆን አለበት — ጥቅም ላይ ያልዋለ እና ምንም አይነት የአካል ጉዳት (Physical damage) ያልደረሰበት።\n\n• ዋናውን ደረሰኝ ይዘው ይምጡ።\n\n• ከ48 ሰዓታት በኋላ፦ የጥሬ ገንዘብ ተመላሽ አይደረግም። በምትኩ በሱቃችን ሌላ እቃ መግዣ (Store credit) ወይም ሌላ ስልክ መቀየር እንችላለን።",
+  },
+  {
+    id: 'item-3',
+    title: '🚚 Shipping & Delivery',
+    content:
+      "We deliver within Addis Ababa.\n\n• Same-day pickup available at our store.\n• Home delivery within 24 hours (fee varies by location).\n• We partner with trusted local couriers.\n• Prefer in-person? Visit us at Bole — opposite the school, Alemnesch Plaza 014.",
+    contentAm:
+      "አዲስ አበባ ውስጥ እናደርሳለን።\n\n• በዕለቱ ከሱቃችን መረከብ (Pickup) ይቻላል።\n• በ24 ሰዓት ውስጥ የቤት ለቤት አቅርቦት (የማድረሻ ክፍያ እንደ ቦታው ይለያያል)።\n• ከታማኝ የሀገር ውስጥ መላላኪያዎች ጋር እንሰራለን።\n• በአካል መገኘት ይመርጣሉ? ቦሌ — አለምነሽ ፕላዛ (Alemnesh Plaza) 014 በሚገኘው TEDMOBILE (ቴድ ሞባይል) ሱቃችን ይጎብኙን።",
+  },
+  {
+    id: 'item-4',
+    title: '🛡️ How We Verify Phones (Anti-Fraud)',
+    content:
+      "Every phone goes through strict verification before sale:\n\n✔ IMEI checked — not blacklisted or reported stolen.\n✔ Authentic hardware — no clone or counterfeit parts.\n✔ iCloud / Google account unlocked — no activation lock.\n✔ Full diagnostic test — camera, battery, screen, speakers.\n\nCloned or locked phones are never sold at TedyTech.",
+    contentAm:
+      "🛡️ ስልኮችን የምናረጋግጥበት መንገድ (ከማጭበርበር የጸዳ)\n\nእያንዳንዱ ስልክ ከመሸጡ በፊት ጥብቅ የማጣራት ሂደት ውስጥ ያልፋል፦\n\n✔ IMEI ተፈትሿል፦ በጥቁር መዝገብ ላይ ያልሰፈረ ወይም የተሰረቀ ተብሎ ሪፖርት ያልተደረገበት።\n✔ ኦሪጅናል ሃርድዌር፦ ምንም አይነት የተቀዳ (clone) ወይም አስመሳይ እቃ የሌለው።\n✔ iCloud / Google አካውንት የተከፈተ፦ ምንም አይነት የኤክቲቬሽን መቆለፊያ (activation lock) የሌለው።\n✔ ሙሉ የቴክኒክ ምርመራ፦ ካሜራ፣ ባትሪ፣ ስክሪን እና ስፒከር።\n\nየተቀዱ (Clone) ወይም የተቆለፉ ስልኮች በTedyTech በፍፁም አይሸጡም።",
+  },
+  {
+    id: 'item-5',
+    title: '⏱️ Exchange Process Timeline',
+    content:
+      "The entire exchange process typically takes under 1 hour:\n\n1. Bring your phone — our team evaluates it (15–20 min).\n2. Receive a fair offer based on model, condition, and storage.\n3. Accept the offer and choose your new phone.\n4. Pay any difference and leave with your upgrade — often same day.",
+    contentAm:
+      "⏱️ የልውውጥ ሂደት የጊዜ ሰሌዳ\n\nአጠቃላይ የልውውጥ ሂደቱ ብዙውን ጊዜ ከ1 ሰዓት በታች ይፈጃል፦\n\nስልክዎን ይዘው ይምጡ — የቡድናችን አባላት ይመረምሩታል (ከ15–20 ደቂቃ)።\n\nእንደ ስልኩ ሞዴል፣ ሁኔታ እና የሜሞሪ መጠን (Storage) ተመጣጣኝ ዋጋ ይሰጥዎታል።\n\nየቀረበልዎትን ዋጋ ሲቀበሉ አዲሱን ስልክዎን ይመርጣሉ።\n\nየዋጋ ልዩነቱን በመክፈል አዲሱን ስልክዎን (Upgrade) ይዘው ይሄዳሉ — ይህም በአብዛኛው በዚያው ቀን ይጠናቀቃል።",
+  },
+  {
+    id: 'item-6',
+    title: '📱 Is the Phone Box Included?',
+    content:
+      "Brand-new phones always come with the original box and full accessories.\n\nFor used/refurbished phones, original packaging varies — some include the box, some don't. Ask us about a specific phone before purchasing.",
+    contentAm:
+      "📱 የስልኩ ካርቶን ይካተታል?\n\nአዲስ (Brand-new) ስልኮች ሁልጊዜ ከዋናው ካርቶናቸው እና ከሙሉ መለዋወጫዎቻቸው (accessories) ጋር ይመጣሉ።\n\nለያገለገሉ ወይም እንደ አዲስ ለታደሱ (used/refurbished) ስልኮች፣ የማሸጊያው ሁኔታ ይለያያል — አንዳንዶቹ ካርቶን አላቸው፣ አንዳንዶቹ ደግሞ የላቸውም። ከመግዛትዎ በፊት ስለሚፈልጉት ስልክ በዝርዝር ይጠይቁን።",
+  },
+  {
+    id: 'item-7',
+    title: '❓ Do You Buy / Accept Trade-Ins?',
+    content:
+      "Yes! We buy used phones and accept trade-ins.\n\n• Bring your phone for a free evaluation (no commitment).\n• We assess model, condition, and storage — you get an instant offer.\n• Accept it as credit toward a new phone, or take cash.\n\nReady to exchange? Tap below to start:",
+    contentAm:
+      "❓ ስልኮችን ትገዛላችሁ / በልውውጥ (Trade-In) ትቀበላላችሁ?\n\nአዎ! ያገለገሉ ስልኮችን እንገዛለን እንዲሁም በልውውጥ እንቀበላለን።\n\n• ያለምንም ግዴታ (no commitment) ለነፃ ግምገማ ስልክዎን ይዘው ይምጡ።\n• የስልኩን ሞዴል፣ ሁኔታ እና የሜሞሪ መጠን (Storage) በማየት ወዲያውኑ ዋጋ እንሰጥዎታለን።\n• የሰጠናችሁን ዋጋ ለአዲስ ስልክ መግዣ (Credit) መጠቀም ወይም በጥሬ ገንዘብ (Cash) መውሰድ ይችላሉ።\n\nለመለዋወጥ ዝግጁ ነዎት? ለመጀመር ከታች ይጫኑ፦",
+    hasExchangeButton: true,
+  },
+];
 
 const translations: Record<Lang, Translations> = {
   en: {
@@ -41,51 +104,6 @@ const translations: Record<Lang, Translations> = {
     chipWarranty: '1 Year Warranty',
     faqTitle: 'Warranty & Policies',
     goToExchange: 'Go to Exchange →',
-    faq: [
-      {
-        id: 'item-1',
-        title: "📦 1 Year Warranty — What's Covered?",
-        content:
-          "All phones sold at TedyTech come with a 1-year warranty covering manufacturing defects, hardware failures, and battery issues.\n\n• Covered: factory defects, hardware faults, battery degradation.\n• NOT covered: cracked screens, water damage, physical misuse.\n\nTo make a claim, bring your receipt and the phone to our Addis Ababa store.",
-      },
-      {
-        id: 'item-2',
-        title: '🔄 Return & Refund Policy',
-        content:
-          "Returns are accepted within 48 hours of purchase if the phone has a defect we missed.\n\n• Phone must be in the same condition as sold — unused, no physical damage.\n• Bring your original receipt.\n• After 48 hours: no cash refunds. We offer store credit or an exchange.",
-      },
-      {
-        id: 'item-3',
-        title: '🚚 Shipping & Delivery',
-        content:
-          "We deliver within Addis Ababa.\n\n• Same-day pickup available at our store.\n• Home delivery within 24 hours (fee varies by location).\n• We partner with trusted local couriers.\n• Prefer in-person? Visit us at Bole — opposite the school, Alemnesch Plaza 014.",
-      },
-      {
-        id: 'item-4',
-        title: '🛡️ How We Verify Phones (Anti-Fraud)',
-        content:
-          "Every phone goes through strict verification before sale:\n\n✔ IMEI checked — not blacklisted or reported stolen.\n✔ Authentic hardware — no clone or counterfeit parts.\n✔ iCloud / Google account unlocked — no activation lock.\n✔ Full diagnostic test — camera, battery, screen, speakers.\n\nCloned or locked phones are never sold at TedyTech.",
-      },
-      {
-        id: 'item-5',
-        title: '⏱️ Exchange Process Timeline',
-        content:
-          "The entire exchange process typically takes under 1 hour:\n\n1. Bring your phone — our team evaluates it (15–20 min).\n2. Receive a fair offer based on model, condition, and storage.\n3. Accept the offer and choose your new phone.\n4. Pay any difference and leave with your upgrade — often same day.",
-      },
-      {
-        id: 'item-6',
-        title: '📱 Is the Phone Box Included?',
-        content:
-          "Brand-new phones always come with the original box and full accessories.\n\nFor used/refurbished phones, original packaging varies — some include the box, some don't. Ask us about a specific phone before purchasing.",
-      },
-      {
-        id: 'item-7',
-        title: '❓ Do You Buy / Accept Trade-Ins?',
-        content:
-          "Yes! We buy used phones and accept trade-ins.\n\n• Bring your phone for a free evaluation (no commitment).\n• We assess model, condition, and storage — you get an instant offer.\n• Accept it as credit toward a new phone, or take cash.\n\nReady to exchange? Tap below to start:",
-        hasExchangeButton: true,
-      },
-    ],
   },
   am: {
     whyChooseUs: 'ደንበኞቻችን ለምን ይመርጡናል',
@@ -95,51 +113,6 @@ const translations: Record<Lang, Translations> = {
     chipWarranty: '1 ዓመት ዋስትና',
     faqTitle: 'ዋስትና እና ፖሊሲዎች',
     goToExchange: 'ወደ ልውውጥ ሂድ →',
-    faq: [
-      {
-        id: 'item-1',
-        title: '📦 1 ዓመት ዋስትና — ምን ይሸፍናል?',
-        content:
-          "በቴዲቴክ የሚሸጡ ሁሉም ስልኮች 1 ዓመት ዋስትና አላቸው — የማምረቻ ጉድለቶችን፣ የሃርድዌር ችግሮችን እና የባትሪ ጉዳዮችን ይሸፍናል።\n\n• የሚሸፈነው: የፋብሪካ ጉድለቶች፣ የሃርድዌር ስህተቶች፣ የባትሪ መዳከም።\n• የማይሸፈነው: የተሰባበረ ስክሪን፣ የውሃ ጉዳት፣ አካላዊ ጉዳት።\n\nዋስትና ለመጠቀም ደረሰኝዎን እና ስልኩን ወደ ሱቃችን ያምጡ።",
-      },
-      {
-        id: 'item-2',
-        title: '🔄 መመለስ እና ገንዘብ መቀበያ ፖሊሲ',
-        content:
-          "ስልኩ ጉድለት ካለ ከተገዛ በኋላ በ48 ሰዓታት ውስጥ ተቀባይነት ይኖረዋል።\n\n• ስልኩ እንደተሸጠው ሁኔታ መሆን አለበት — ጥቅም ላይ ያልዋለ፣ አካላዊ ጉዳት የሌለበት።\n• ዋናውን ደረሰኝ ያምጡ።\n• ከ48 ሰዓታት በኋላ: ጥሬ ገንዘብ አይመለስም። የሱቅ ክሬዲት ወይም ልውውጥ እናቀርባለን።",
-      },
-      {
-        id: 'item-3',
-        title: '🚚 ማድረሻ እና አቅርቦት',
-        content:
-          "በአዲስ አበባ ውስጥ እናደርሳለን።\n\n• ዕለቱኑ ለመውሰድ ዝግጁ ነን።\n• በ24 ሰዓታት ውስጥ ወደ ቤትዎ እናደርሳለን (ክፍያ እንደ አካባቢ ይለያያል)።\n• ከታማኝ አካባቢ ኩሪየሮች ጋር እንሰራለን።\n• ቀጥታ ለመምጣት: ቦሌ — ት/ቤት ፊትለፊት፣ አለምነሽ ፕላዛ 014 ይጎብኙን።",
-      },
-      {
-        id: 'item-4',
-        title: '🛡️ ስልኮችን እንዴት እናረጋግጣለን (ፀረ-ማጭበርበሪያ)',
-        content:
-          "እያንዳንዱ ስልክ ከመሸጡ በፊት ጥብቅ ምርመራ ያልፋል:\n\n✔ IMEI ተረጋጋጠ — ጥቁር ዝርዝር ላይ የለም ወይም ሰርቆ ሪፖርት ያልተደረገ።\n✔ ትክክለኛ ሃርድዌር — ምንም ክሎን ወይም የወረዱ ክፍሎች የሉም።\n✔ iCloud / Google መለያ ተከፍቷል — ምንም ማስጀመሪያ ቁልፍ የለም።\n✔ ሙሉ ምርመራ — ካሜራ፣ ባትሪ፣ ስክሪን፣ ድምጽ ማጉያ።\n\nክሎን ወይም ቆልፈው የተቀመጡ ስልኮች በቴዲቴክ ፈጽሞ አይሸጡም።",
-      },
-      {
-        id: 'item-5',
-        title: '⏱️ የልውውጥ ሂደት ጊዜ',
-        content:
-          "ሙሉ የልውውጥ ሂደቱ ብዙውን ጊዜ ከ1 ሰዓት ያነሰ ጊዜ ይወስዳል:\n\n1. ስልክዎን ያምጡ — ቡድናችን ይገምግመዋል (15–20 ደቂቃ)።\n2. ሞዴሉን፣ ሁኔታውን እና ማህደሩን ብቃቱ ላይ ተመስርቶ ፍትሃዊ ቅናሽ ያገኛሉ።\n3. ቅናሹን ተቀበሉ እና አዲስ ስልክ ይምረጡ።\n4. ልዩነቱን ይክፈሉ እና ዕለቱኑ ወደ አፕግሬዱ ይሂዱ።",
-      },
-      {
-        id: 'item-6',
-        title: '📱 የስልኩ ሳጥን ይካተታል?',
-        content:
-          "አዲስ ስልኮች ሁል ጊዜ ዋናቸውን ሳጥን እና ሁሉም ተጨማሪ ዕቃዎችን ይዘው ይመጣሉ።\n\nለጥቅም ላይ/ያገለገሉ ስልኮች፣ ዋናው ማሸጊያ ተገኝነት ይለያያል — አንዳንዱ ሳጥን ያካትታል፣ አንዳንዱ ደግሞ አያካትትም። ከመግዛቱ በፊት ስለ ልዩ ስልኩ ይጠይቁን።",
-      },
-      {
-        id: 'item-7',
-        title: '❓ ጥቅም ላይ የዋሉ ስልኮችን ይገዛሉ / ልውውጥ ይቀበላሉ?',
-        content:
-          "አዎ! ጥቅም ላይ የዋሉ ስልኮችን እንገዛለን እና ልውውጥ እንቀበላለን።\n\n• ስልክዎን ለነጻ ግምገማ ያምጡ (ምንም ቃልኪዳን የለም)።\n• ሞዴሉን፣ ሁኔታውን እና ማህደሩን እንገምግማለን — ፈጣን ቅናሽ ያገኛሉ።\n• ቅናሹን ወደ አዲስ ስልክ ክሬዲት ሲሄዱ ወይም ጥሬ ገንዘብ ይቀበሉ።\n\nለልውውጥ ዝግጁ ነዎት? ከዚህ በታች ይጫኑ:",
-        hasExchangeButton: true,
-      },
-    ],
   },
 };
 
@@ -159,7 +132,7 @@ export function AboutTab({ onNavigateToExchange }: AboutTabProps) {
   const [openFaq, setOpenFaq] = useState<string>('');
   const faqRef = useRef<HTMLDivElement>(null);
 
-  const trustChips = ['Trusted Store', 'Exchange Available', 'Addis Ababa'];
+  const trustChips = ['✅ Verified Phones', '🔄 Exchange Available', '📍 Addis Ababa'];
 
   const benefitChips = [
     { emoji: '✅', label: t.chipTrusted, faqId: 'item-4' },
@@ -242,7 +215,7 @@ export function AboutTab({ onNavigateToExchange }: AboutTabProps) {
             {trustChips.map((chip, index) => (
               <span
                 key={chip}
-                className="px-3 py-1.5 bg-blue-light text-primary text-xs font-medium rounded-full opacity-0 animate-fade-in"
+                className="px-3 py-1.5 bg-primary/15 border border-primary/25 text-primary text-xs font-semibold rounded-full opacity-0 animate-fade-in"
                 style={{ animationDelay: `${0.2 + index * 0.1}s`, animationFillMode: 'forwards' }}
               >
                 {chip}
@@ -280,10 +253,10 @@ export function AboutTab({ onNavigateToExchange }: AboutTabProps) {
 
         {/* Today's Service Promise */}
         <div
-          className="bg-success-light rounded-2xl p-4 border border-success/20 opacity-0 animate-fade-in"
+          className="bg-primary/10 rounded-2xl p-4 border border-primary/15 opacity-0 animate-fade-in"
           style={{ animationDelay: '0.6s', animationFillMode: 'forwards' }}
         >
-          <h3 className="font-semibold text-success mb-3">Today's Service Promise</h3>
+          <h3 className="font-semibold text-foreground mb-3">Today's Service Promise</h3>
           <div className="space-y-2">
             {promises.map((promise, index) => {
               const Icon = promise.icon;
@@ -293,8 +266,8 @@ export function AboutTab({ onNavigateToExchange }: AboutTabProps) {
                   className="flex items-center gap-2 opacity-0 animate-fade-in"
                   style={{ animationDelay: `${0.7 + index * 0.05}s`, animationFillMode: 'forwards' }}
                 >
-                  <Icon className="w-4 h-4 text-success" />
-                  <span className="text-sm text-success">{promise.text}</span>
+                  <Icon className="w-4 h-4 text-primary" />
+                  <span className="text-sm text-foreground/80">{promise.text}</span>
                 </div>
               );
             })}
@@ -351,7 +324,7 @@ export function AboutTab({ onNavigateToExchange }: AboutTabProps) {
                 no borders. The default border-b + container overflow-hidden is the correct
                 pattern.
               */}
-              {t.faq.map((item) => (
+              {faqItems.map((item) => (
                 <AccordionItem
                   key={item.id}
                   value={item.id}
@@ -361,6 +334,11 @@ export function AboutTab({ onNavigateToExchange }: AboutTabProps) {
                   </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4 pt-1 text-sm text-muted-foreground">
                     <p className="whitespace-pre-line leading-relaxed">{item.content}</p>
+                    {item.contentAm && (
+                      <p className="whitespace-pre-line leading-relaxed mt-3 pt-3 border-t border-border/40 text-muted-foreground/80">
+                        {item.contentAm}
+                      </p>
+                    )}
                     {item.hasExchangeButton && (
                       <button
                         onClick={onNavigateToExchange}

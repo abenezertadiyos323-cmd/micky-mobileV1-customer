@@ -270,30 +270,29 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
           )}
         </div>
 
-        {/* 3. Quick Info Badges */}
-        <div className="flex flex-wrap gap-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          {rawPhone?.storage_gb && (
-            <span className="inline-block bg-primary/15 text-primary px-3 py-1.5 rounded-lg text-sm font-medium">
-              {rawPhone.storage_gb}GB Storage
-            </span>
-          )}
-          {product.condition && (
-            <span className={cn(
-              "inline-block px-3 py-1.5 rounded-lg text-sm font-medium",
-              product.condition.toLowerCase() === 'new' ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"
-            )}>
-              {getConditionLabel(product.condition)}
-            </span>
-          )}
-        </div>
+        {/* 3. Quick Info Badges — only render when at least one badge has data */}
+        {(rawPhone?.storage_gb || product.condition) && (
+          <div className="flex flex-wrap gap-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            {rawPhone?.storage_gb && (
+              <span className="inline-block bg-primary/15 text-primary px-3 py-1.5 rounded-lg text-sm font-medium">
+                {rawPhone.storage_gb}GB Storage
+              </span>
+            )}
+            {product.condition && (
+              <span className={cn(
+                "inline-block px-3 py-1.5 rounded-lg text-sm font-medium",
+                product.condition.toLowerCase() === 'new' ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"
+              )}>
+                {getConditionLabel(product.condition)}
+              </span>
+            )}
+          </div>
+        )}
 
-        {/* 4. Exchange Availability */}
-        {rawPhone?.exchange_available !== undefined && rawPhone?.exchange_available !== null && (
-          <p className="text-sm text-foreground animate-fade-in" style={{ animationDelay: '0.25s' }}>
-            Exchange:{' '}
-            <span className={rawPhone.exchange_available ? 'text-success font-medium' : 'text-muted-foreground'}>
-              {rawPhone.exchange_available ? 'Available' : 'Not Available'}
-            </span>
+        {/* 4. Exchange Availability — only shown when exchange is available */}
+        {rawPhone?.exchange_available === true && (
+          <p className="text-sm text-success font-medium animate-fade-in" style={{ animationDelay: '0.25s' }}>
+            Exchange available
           </p>
         )}
 
