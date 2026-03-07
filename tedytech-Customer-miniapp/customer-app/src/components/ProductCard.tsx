@@ -25,7 +25,7 @@ export function ProductCard({ product, onClick, index = 0 }: ProductCardProps) {
   return (
     <div
       className={cn(
-        "bg-card rounded-2xl overflow-hidden card-shadow hover-lift cursor-pointer group opacity-0 animate-fade-in",
+        "bg-card rounded-2xl overflow-hidden card-shadow hover-lift cursor-pointer group opacity-0 animate-fade-in flex flex-col",
         `stagger-${Math.min(index + 1, 6)}`,
       )}
       style={{ animationFillMode: "forwards" }}
@@ -61,11 +61,11 @@ export function ProductCard({ product, onClick, index = 0 }: ProductCardProps) {
         </button>
       </div>
 
-      <div className="p-3">
+      <div className="p-3 flex flex-col flex-1">
         <h3 className="font-medium text-foreground text-xs leading-tight mb-2 line-clamp-2">
           {product.title}
         </h3>
-        <div className="space-y-1.5 mb-2">
+        <div className="space-y-1">
           {product.storageGb && (
             <div className="inline-block">
               <span className="text-xs bg-muted/60 text-muted-foreground px-2 py-1 rounded-md font-medium">
@@ -77,7 +77,7 @@ export function ProductCard({ product, onClick, index = 0 }: ProductCardProps) {
             {product.condition}
           </p>
         </div>
-        <p className="text-foreground text-base font-bold">
+        <p className="text-foreground text-base font-bold mt-auto pt-1">
           {product.priceBirr.toLocaleString()} Birr
         </p>
       </div>
