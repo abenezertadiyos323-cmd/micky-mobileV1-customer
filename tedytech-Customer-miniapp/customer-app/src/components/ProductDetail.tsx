@@ -299,14 +299,16 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
         {/* 5. Specifications */}
         {rawPhone && (
           (() => {
+            const storageDisplay = rawPhone?.storage_gb ? `${rawPhone.storage_gb}GB` : undefined;
             const specsRows = [
+              { label: 'Storage', value: storageDisplay },
               { label: 'RAM', value: rawPhone?.ram },
+              { label: 'Color', value: rawPhone?.color },
               { label: 'Screen Size', value: rawPhone?.screenSize },
               { label: 'Battery', value: rawPhone?.battery },
               { label: 'Main Camera', value: rawPhone?.mainCamera },
               { label: 'Selfie Camera', value: rawPhone?.selfieCamera },
               { label: 'SIM Type', value: rawPhone?.simType },
-              { label: 'Color', value: rawPhone?.color },
               { label: 'Operating System', value: rawPhone?.operatingSystem },
             ].filter(s => s.value);
 
@@ -394,12 +396,36 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
         )}
 
         {/* Description */}
-        {rawPhone?.description && (
-          <div className="animate-fade-in" style={{ animationDelay: '0.65s' }}>
-            <h3 className="font-semibold text-foreground mb-2">Description</h3>
-            <p className="text-sm text-muted-foreground">{rawPhone.description}</p>
-          </div>
-        )}
+        {rawPhone?.description && (() => {
+          const lines = rawPhone.description
+            .split('\n')
+            .map(l => l.trim())
+            .filter(Boolean);
+          // Detect if the description is a dash/bullet list (admin typed "- X" style)
+          const isList = lines.length > 1 && lines.every(l => /^[-•*]/.test(l));
+          const cleanLines = isList
+            ? lines.map(l => l.replace(/^[-•*]\s*/, ''))
+            : lines;
+          return (
+            <div className="animate-fade-in" style={{ animationDelay: '0.65s' }}>
+              <h3 className="font-semibold text-foreground mb-2">Notes</h3>
+              {isList ? (
+                <ul className="space-y-1.5 list-none">
+                  {cleanLines.map((line, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full mt-2 flex-shrink-0" />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {cleanLines.join(' ')}
+                </p>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Bottom Actions */}

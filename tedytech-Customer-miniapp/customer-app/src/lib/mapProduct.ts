@@ -12,6 +12,8 @@ export interface ProductVM {
   brand: string;
   model: string;
   storageGb?: number | null;
+  ram?: string;
+  color?: string;
   screenSize?: string;
   battery?: string;
   mainCamera?: string;
@@ -97,6 +99,11 @@ export function mapToProductVM(raw: Record<string, unknown>): ProductVM {
 
   const storageGb = normalizeNumber(raw.storage_gb, 0) || undefined;
 
+  const ram =
+    typeof raw.ram === "string" && raw.ram.trim() ? raw.ram.trim() : undefined;
+  const color =
+    typeof raw.color === "string" && raw.color.trim() ? raw.color.trim() : undefined;
+
   const screenSize =
     typeof raw.screenSize === "string" && raw.screenSize.trim()
       ? raw.screenSize.trim()
@@ -138,6 +145,8 @@ export function mapToProductVM(raw: Record<string, unknown>): ProductVM {
     brand,
     model,
     storageGb: storageGb,
+    ram,
+    color,
     screenSize,
     battery,
     mainCamera,
@@ -153,14 +162,14 @@ export function productVMToPhone(vm: ProductVM): Phone {
     id: vm.id,
     brand: vm.brand,
     model: vm.model,
-    ram: null,
-    storage_gb: null,
+    ram: vm.ram ?? null,
+    storage_gb: vm.storageGb ?? null,
     price_birr: vm.priceBirr,
     old_price_birr: null,
     condition: vm.condition.toLowerCase().replace(/\s+/g, "_"),
     main_image_url: vm.imageUrl,
     description: null,
-    color: null,
+    color: vm.color ?? null,
     in_stock: vm.inStock,
     stock_count: null,
     is_new_arrival: false,
