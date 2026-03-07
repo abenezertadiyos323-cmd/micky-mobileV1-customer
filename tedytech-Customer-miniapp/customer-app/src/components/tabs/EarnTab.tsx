@@ -187,9 +187,9 @@ function EarnTabInner() {
         </div>
       </header>
 
-      <div className="p-4 space-y-6 pt-20">
+      <div className="p-4 space-y-4 pt-20">
         {/* Hero Text */}
-        <div className="text-center py-4">
+        <div className="text-center py-2">
           <h2 className="text-lg font-semibold text-foreground mb-2">
             Earn money when your friend buys a phone through you.
           </h2>
@@ -343,13 +343,15 @@ function EarnTabInner() {
           </div>
         </Card>
 
-        {/* Inline retry — shown only after creation was attempted and failed */}
-        {hasTriedCreate && !hasAffiliate && !createAffiliate.isPending && (
+        {/* Inline retry — shown only when creation was attempted AND truly failed.
+            Checks !stats.referralCode so a successful create (which sets the code
+            in getUserReferralStats immediately) does not show a false error. */}
+        {hasTriedCreate && !hasAffiliate && !stats.referralCode && !createAffiliate.isPending && (
           <div className="text-center space-y-2 py-2">
             <p className="text-xs text-muted-foreground">
               {mutationError
-                ? `Setup error: ${mutationError}`
-                : 'Could not set up affiliate account.'}
+                ? `Setup failed: ${mutationError}`
+                : 'Could not create your referral code. Tap to try again.'}
             </p>
             <Button
               size="sm"
@@ -365,7 +367,7 @@ function EarnTabInner() {
         )}
 
         {/* Payout Info */}
-        <div className="text-center py-4">
+        <div className="text-center py-2">
           <p className="text-xs text-muted-foreground">
             💰 Paid manually by admin
           </p>

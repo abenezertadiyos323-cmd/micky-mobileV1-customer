@@ -14,7 +14,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronsUpDown, CheckCircle } from "lucide-react";
 import { useBrowsePhones } from "@/hooks/usePhones";
 import {
   useCreateExchangeRequest,
@@ -30,7 +30,7 @@ const PhonePickerContent = lazy(() =>
 );
 
 const STORAGE_OPTIONS = [64, 128, 256, 512];
-const CONDITION_OPTIONS = ["Excellent", "Good", "Fair"];
+const CONDITION_OPTIONS = ["Like New", "Excellent", "Good", "Fair", "Poor"];
 
 export function ExchangeTab() {
   const { sessionId, targetExchangePhone } = useApp();
@@ -45,6 +45,8 @@ export function ExchangeTab() {
   const [extraDetails, setExtraDetails] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [phoneSelectOpen, setPhoneSelectOpen] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [telegramUrl, setTelegramUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (targetExchangePhone?.id) {
@@ -86,11 +88,35 @@ export function ExchangeTab() {
         offeredNotes: extraDetails.trim(),
       });
 
-      window.location.href = `https://t.me/${storeConfig.botUsername}?start=${storeConfig.telegramStartPrefix}${leadId}`;
+      // Show a success screen so the customer sees confirmation before leaving.
+      setTelegramUrl(`https://t.me/${storeConfig.botUsername}?start=${storeConfig.telegramStartPrefix}${leadId}`);
+      setSubmitted(true);
     } catch {
       // Error toast handled by hooks.
     }
   };
+
+  if (submitted) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-5 px-6 pb-24 text-center min-h-[60vh]">
+        <CheckCircle className="w-14 h-14 text-green-500" />
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold text-foreground">Request Submitted!</h2>
+          <p className="text-sm text-muted-foreground">
+            Our team will review your exchange and reach out to you on Telegram.
+          </p>
+        </div>
+        {telegramUrl && (
+          <Button
+            className="w-full max-w-xs"
+            onClick={() => { window.location.href = telegramUrl; }}
+          >
+            Continue to Telegram
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 pb-24 px-4">
