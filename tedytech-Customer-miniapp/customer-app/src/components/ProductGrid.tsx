@@ -73,9 +73,9 @@ export function ProductGrid({
 
   // Single section mode
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-12">
       <h3 className="text-lg font-bold text-foreground animate-slide-in-left">{sectionTitle}</h3>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 items-start">
         {displayPhones.map((phone, index) => (
           <ProductCard 
             key={phone.id} 
