@@ -2,13 +2,13 @@
   "name": "mickymobile-workspace",
   "private": true,
   "workspaces": [
-    "micky-mobile-miniapp"
+    "micky-mobile-miniapp/customer-app"
   ],
   "dependencies": {
     "convex": "^1.31.6"
   },
   "scripts": {
     "install:all": "npm install --workspaces",
-    "build": "npm --workspace=micky-mobile-miniapp run build"
+    "build": "npm --workspace=mickymobile-customer-miniapp run build"
   }
 }
