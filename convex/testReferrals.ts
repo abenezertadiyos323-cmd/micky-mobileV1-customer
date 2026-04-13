@@ -157,7 +157,7 @@ export const runReferralTests = internalAction({
     };
 
     console.log("══════════════════════════════════════════════════");
-    console.log(`  TedyTech Referral Regression Test`);
+    console.log(`  Micky Mobile Referral Regression Test`);
     console.log(`  Mode : ${DRY_RUN ? "DRY-RUN (no DB writes)" : "FULL (writes + cleanup)"}`);
     console.log(`  Test IDs : A=${A_TID}  B=${B_TID}`);
     console.log("══════════════════════════════════════════════════");

@@ -1,8 +1,8 @@
 ## Project description
 
-TedyTech — a monorepo powering two Telegram Mini Apps (Customer and Admin) and a shared Convex backend. This file is the root-level single source of truth for Claude Code work; detailed frontend specs live in `tedytech-admin-miniapp/FRONTEND_SPEC.md` in the admin package.
+Micky Mobile — a monorepo powering two Telegram Mini Apps (Customer and Admin) and a shared Convex backend. This file is the root-level single source of truth for Claude Code work; detailed frontend specs live in `tedytech-admin-miniapp/FRONTEND_SPEC.md` in the admin package.
 
-## TedyTech system
+## Micky Mobile system
 
 - Customer Telegram Mini App (`tedytech-Customer-miniapp`): customer-facing Telegram Mini App for browsing phones, searching, favorites, actions, and checkout.
 - Admin Telegram Mini App (`tedytech-admin-miniapp`): admin-facing Telegram Mini App for monitoring and managing activity (dashboard, inventory, exchanges/orders, inbox).

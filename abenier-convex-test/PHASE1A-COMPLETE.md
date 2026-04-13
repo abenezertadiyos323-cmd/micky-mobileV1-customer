@@ -233,7 +233,7 @@ useMutation(api.mutations.products.createProduct, {
   phone: "+251911234567",
 
   // Business
-  businessName: "TedyTech Phone Shop",
+  businessName: "Micky Mobile Phone Shop",
   businessType: "phone_seller",
   role: "admin",
   isActive: true

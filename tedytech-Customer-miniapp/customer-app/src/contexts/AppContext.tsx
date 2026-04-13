@@ -82,8 +82,8 @@ const IS_DEBUG =
 function debugLog(msg: string, data?: Record<string, unknown>) {
   if (!IS_DEBUG) return;
   data !== undefined
-    ? console.debug(`[TedyTech] ${msg}`, data)
-    : console.debug(`[TedyTech] ${msg}`);
+    ? console.debug(`[Micky Mobile] ${msg}`, data)
+    : console.debug(`[Micky Mobile] ${msg}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -95,7 +95,7 @@ type TelegramCheckState = "checking" | "in_telegram" | "needs_telegram";
 const TELEGRAM_STARTAPP_URL = `https://t.me/${storeConfig.botUsername}?startapp=home`;
 const TG_USER_STORAGE_KEY = "tg_user_id";
 // Stores the ?ref= referral code from the URL across the session until auth resolves.
-const REF_STORAGE_KEY = "tedytech_ref";
+const REF_STORAGE_KEY = "mickymobile_ref";
 // localStorage key for referral-flow debug snapshot (always written, read by ReferralDebugPanel).
 const REF_DEBUG_KEY = "TEDY_REF_DEBUG_LAST";
 // Developer Telegram ID — auto-toasts visible only to this account, no flag needed.
@@ -413,7 +413,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         timer = setTimeout(poll, POLL_MS);
       } catch (err) {
         // Always log real errors — not gated behind debug flag
-        console.error("[TedyTech] poll error:", err);
+        console.error("[Micky Mobile] poll error:", err);
         if (!cancelled) setCheckState("needs_telegram");
       }
     }
@@ -491,7 +491,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               refCode = startParam.slice(4); // strip leading 'ref_'
               _dbgRefSource = "start_param";
               _dbgRefRaw = startParam;
-              console.log("[TedyTech] referral code from start_param", { code: refCode });
+              console.log("[Micky Mobile] referral code from start_param", { code: refCode });
             }
           } catch { /* ignore */ }
         }
@@ -515,7 +515,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // Removed annoyting toasts requested by user
 
         if (_dbgMutationTriggered) {
-          console.log("[TedyTech] applying referral", { refCode, referredId: tgUser!.id });
+          console.log("[Micky Mobile] applying referral", { refCode, referredId: tgUser!.id });
           createReferralMutation({
             referralCode: refCode!,
             referredTelegramId: tgUser!.id,
@@ -545,7 +545,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // Non-fatal: initData may be expired or TELEGRAM_BOT_TOKEN not set yet.
         // UX is already running — log and continue.
         const msg = err instanceof Error ? err.message : String(err);
-        console.warn("[TedyTech] Background Telegram verification failed:", msg);
+        console.warn("[Micky Mobile] Background Telegram verification failed:", msg);
       });
   }, [checkState, verifyTelegramUserMutation, createReferralMutation]);
 

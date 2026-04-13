@@ -2,7 +2,11 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { ArrowLeft, Heart, ShoppingBag, RefreshCw, Check, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { usePhoneDetail } from '@/hooks/usePhones';
-import { useCreatePhoneAction, type LeadSourceTab } from '@/hooks/usePhoneActions';
+import {
+  useCreatePhoneAction,
+  useTelegramStartLinkBuilder,
+  type LeadSourceTab,
+} from '@/hooks/usePhoneActions';
 import { cn } from '@/lib/utils';
 import type { Phone } from '@/types/phone';
 import { formatPrice, getConditionLabel } from '@/types/phone';
@@ -21,6 +25,7 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
   const { toggleSaved, isSaved, setTargetExchangePhone, sessionId } = useApp();
   const { data: phoneDetail, isLoading } = usePhoneDetail(phoneId);
   const createPhoneAction = useCreatePhoneAction(sessionId);
+  const { openStartLink } = useTelegramStartLinkBuilder();
 
   const rawPhone: Phone | null =
     phoneDetail?.phone ??
@@ -46,6 +51,7 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
   const [selectedStorage, setSelectedStorage] = useState<number | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
+  const [isOpeningTelegram, setIsOpeningTelegram] = useState(false);
   const [imageDirection, setImageDirection] = useState<'left' | 'right'>('right');
 
   // Set default storage when variants load
@@ -152,6 +158,40 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
       const itemId = generateItemId(product, selectedStorage);
       window.open(`https://t.me/${storeConfig.botUsername}?start=item_${itemId}`, '_blank');
     }
+  };
+
+  const handleContextualStartInquiry = async () => {
+    if (!product || isOpeningTelegram) return;
+
+    const productLabel = [
+      product.brand,
+      product.model,
+      selectedStorage ? `${selectedStorage}GB` : null,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    setIsOpeningTelegram(true);
+
+    try {
+      await createPhoneAction.mutate({
+        actionType: 'inquiry',
+        sourceTab,
+        sourceProductId: product.id,
+        timestamp: Date.now(),
+        showErrorToast: false,
+      });
+    } catch {
+      // Analytics logging should not block the customer from opening Telegram.
+    }
+
+    await openStartLink({
+      actionType: 'ask',
+      productId: product.id,
+      productLabel,
+    });
+
+    setTimeout(() => setIsOpeningTelegram(false), 500);
   };
 
   if (!product && isLoading) {
@@ -431,11 +471,11 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
       {/* Bottom Actions */}
       <div className="fixed left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border p-4 pb-5 space-y-2 animate-slide-up z-40" style={{ bottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}>
         <button
-          onClick={handleStartInquiry}
-          disabled={createPhoneAction.isPending}
+          onClick={handleContextualStartInquiry}
+          disabled={createPhoneAction.isPending || isOpeningTelegram}
           className="w-full py-2.5 bg-primary text-primary-foreground font-medium text-sm rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-button press-effect hover-glow disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          {createPhoneAction.isPending ? (
+          {createPhoneAction.isPending || isOpeningTelegram ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <ShoppingBag className="w-4 h-4" />

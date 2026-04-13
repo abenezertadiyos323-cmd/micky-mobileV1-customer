@@ -19,10 +19,11 @@ import { useBrowsePhones } from "@/hooks/usePhones";
 import {
   useCreateExchangeRequest,
   useCreatePhoneAction,
+  useTelegramStartLinkBuilder,
+  openTelegramDeepLink,
 } from "@/hooks/usePhoneActions";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
-import { storeConfig } from "@/config/storeConfig";
 
 const _phonePickerChunk = import("./ExchangePhonePicker");
 const PhonePickerContent = lazy(() =>
@@ -39,6 +40,7 @@ export function ExchangeTab() {
   const { data: phones = [], isLoading: phonesLoading } = useBrowsePhones({});
   const createExchange = useCreateExchangeRequest(sessionId);
   const createPhoneAction = useCreatePhoneAction(sessionId);
+  const { buildStartLink } = useTelegramStartLinkBuilder();
 
   const [step, setStep] = useState<ExchangeStep>("form");
   const [selectedPhoneId, setSelectedPhoneId] = useState<string>("");
@@ -89,14 +91,7 @@ export function ExchangeTab() {
     if (!canSubmit || !sessionId) return;
 
     try {
-      const leadId = await createPhoneAction.mutate({
-        actionType: "exchange",
-        sourceTab: targetExchangePhone ? "product_detail" : "home",
-        sourceProductId: selectedPhoneId,
-        timestamp: Date.now(),
-      });
-
-      await createExchange.mutate({
+      const exchangeRequestId = await createExchange.mutate({
         desiredPhoneId: selectedPhoneId,
         offeredModel: yourModel.trim(),
         offeredStorageGb: yourStorage!,
@@ -104,9 +99,30 @@ export function ExchangeTab() {
         offeredNotes: extraDetails.trim(),
       });
 
-      setTelegramUrl(
-        `https://t.me/${storeConfig.botUsername}?start=${storeConfig.telegramStartPrefix}${leadId}`
-      );
+      try {
+        await createPhoneAction.mutate({
+          actionType: "exchange",
+          sourceTab: targetExchangePhone ? "product_detail" : "home",
+          sourceProductId: selectedPhoneId,
+          timestamp: Date.now(),
+          showErrorToast: false,
+        });
+      } catch {
+        // Analytics logging should not block the exchange handoff.
+      }
+
+      const desiredPhoneLabel = selectedPhoneDetail
+        ? `${selectedPhoneDetail.brand} ${selectedPhoneDetail.model}${selectedPhoneDetail.storage_gb ? ` ${selectedPhoneDetail.storage_gb}GB` : ""}`
+        : selectedPhoneDisplay;
+
+      const deepLink = await buildStartLink({
+        actionType: "exchange",
+        productId: selectedPhoneId,
+        productLabel: desiredPhoneLabel,
+        exchangeRequestId,
+      });
+
+      setTelegramUrl(deepLink);
       setStep("submitted");
     } catch {
       // Error toast handled by hooks
@@ -390,7 +406,7 @@ export function ExchangeTab() {
             <Button
               className="w-full"
               onClick={() => {
-                window.location.href = telegramUrl;
+                openTelegramDeepLink(telegramUrl);
               }}
             >
               Continue to Telegram Bot

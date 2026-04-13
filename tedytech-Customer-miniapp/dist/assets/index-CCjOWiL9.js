@@ -1,0 +1,1 @@
+import{r,b as c}from"./vendor-query-ID3LZdv4.js";import{f as l,j as m,a as u}from"./index-bz8hfnqF.js";var f="Portal",p=r.forwardRef((o,a)=>{const{container:e,...s}=o,[n,i]=r.useState(!1);l(()=>i(!0),[]);const t=e||n&&globalThis?.document?.body;return t?c.createPortal(m.jsx(u.div,{...s,ref:a}),t):null});p.displayName=f;export{p as P};

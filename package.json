@@ -1,4 +1,5 @@
 {
+  "name": "mickymobile-workspace",
   "private": true,
   "workspaces": [
     "tedytech-Customer-miniapp"

@@ -62,11 +62,11 @@ const Index = () => {
 
   return (
     <AffiliateContext.Provider value={affiliateState}>
-      <div className="max-w-lg mx-auto bg-background min-h-screen relative overflow-hidden">
+      <div className="max-w-lg mx-auto bg-background min-h-screen relative">
         {/* Tab Content with transitions */}
         <div
           className={cn(
-            "transition-all duration-300 ease-out",
+            "transition-all duration-300 ease-out pb-32",
             isTransitioning ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
           )}
         >

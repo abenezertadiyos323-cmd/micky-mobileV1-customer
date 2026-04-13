@@ -102,7 +102,7 @@ function EarnTabInner() {
     ? `https://t.me/${storeConfig.botUsername}?start=${stats.referralCode}`
     : '';
   const shareMessage = referralLink
-    ? `Get your next phone from TedyTech! Use my referral code ${referralCode}: ${referralLink}`
+    ? `Get your next phone from Micky Mobile! Use my referral code ${referralCode}: ${referralLink}`
     : '';
   const referredPeopleLabel = `${stats.totalReferredCount} ${
     stats.totalReferredCount === 1 ? 'person' : 'people'

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation as useConvexMutation } from "convex/react";
 import { api } from "@/convex_generated/api";
 
-const SESSION_KEY = "tedytech_session_id";
+const SESSION_KEY = "mickymobile_session_id";
 
 export function useSession() {
   const [sessionId, setSessionId] = useState<string | null>(null);

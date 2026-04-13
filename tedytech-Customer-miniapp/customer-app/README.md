@@ -1,6 +1,6 @@
 ## Customer App
 
-This folder holds the frontend package for the TEDYTECH customer mini-app. The Convex backend remains at the repository root in `convex/` so it can be shared with other packages.
+This folder holds the frontend package for the Micky Mobile customer mini-app. The Convex backend remains at the repository root in `convex/` so it can be shared with other packages.
 
 Quick migration steps (run from repo root) to move the frontend files into `customer-app/` using git (preserves history):
 

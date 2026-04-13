@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 function normalizeBotUsername(value: string | undefined): string {
-  if (!value) return "TedyTechBot";
+  if (!value) return "MickyMobileBot";
   return value.trim().replace(/^@+/, "");
 }
 
@@ -11,6 +11,7 @@ function normalizeBotUsername(value: string | undefined): string {
  */
 export const storeConfig = {
   botUsername: normalizeBotUsername(import.meta.env.VITE_BOT_USERNAME as string),
+  sellerId: "mickymobile",
   phoneNumberE164: (import.meta.env.VITE_STORE_PHONE as string) || "",
   mapsUrl: (import.meta.env.VITE_STORE_MAPS_URL as string) || "",
   telegramStartPrefix: "lead_",

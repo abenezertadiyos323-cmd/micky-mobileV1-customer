@@ -1,4 +1,4 @@
-# Antigravity Execution Rules — TEDYTECH Project
+# Antigravity Execution Rules — MICKY MOBILE Project
 
 Root folder: `tedytech/`
 

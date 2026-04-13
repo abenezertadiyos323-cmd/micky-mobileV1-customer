@@ -18,11 +18,11 @@ with two environments:
 
 ## How the CLI decides where to deploy
 
-Convex functions live in `d:\Abenier\TedyTech Admin\Admin-Ted\convex\` (the MASTER repo).
+Convex functions live in `d:\Abenier\Micky Mobile Admin\Admin-Ted\convex\` (the MASTER repo).
 Always run Convex CLI commands from that directory:
 
 ```
-# Admin-Ted repo: d:\Abenier\TedyTech Admin\Admin-Ted
+# Admin-Ted repo: d:\Abenier\Micky Mobile Admin\Admin-Ted
 CONVEX_DEPLOYMENT=dev:dutiful-toucan-720
 ```
 
@@ -39,7 +39,7 @@ functions of its own. It only consumes the generated types from Admin-Ted.
 ### Fixing a production bug
 
 ```bash
-# From Admin-Ted repo: d:\Abenier\TedyTech Admin\Admin-Ted
+# From Admin-Ted repo: d:\Abenier\Micky Mobile Admin\Admin-Ted
 npx convex deploy --yes
 ```
 
@@ -73,7 +73,7 @@ The customer app reads Convex types from Admin-Ted's `_generated` directory via 
 
 ```bash
 # customer-app/scripts/syncConvexGenerated.mjs
-# Primary source: d:\Abenier\TedyTech Admin\Admin-Ted\convex\_generated
+# Primary source: d:\Abenier\Micky Mobile Admin\Admin-Ted\convex\_generated
 # Destination:    customer-app/src/convex_generated/
 ```
 

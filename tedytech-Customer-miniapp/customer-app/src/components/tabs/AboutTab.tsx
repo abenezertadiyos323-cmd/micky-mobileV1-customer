@@ -40,9 +40,9 @@ const faqItems: FaqItem[] = [
     id: 'item-1',
     title: "📦 1 Year Warranty — What's Covered?",
     content:
-      "All phones sold at TedyTech come with a 1-year warranty covering manufacturing defects, hardware failures, and battery issues.\n\n• Covered: factory defects, hardware faults, battery degradation.\n• NOT covered: cracked screens, water damage, physical misuse.\n\nTo make a claim, bring your receipt and the phone to our Addis Ababa store.",
+      "All phones sold at Micky Mobile come with a 1-year warranty covering manufacturing defects, hardware failures, and battery issues.\n\n• Covered: factory defects, hardware faults, battery degradation.\n• NOT covered: cracked screens, water damage, physical misuse.\n\nTo make a claim, bring your receipt and the phone to our Addis Ababa store.",
     contentAm:
-      "📦 የ1 ዓመት ዋስትና — ምን ምን ያካትታል?\n\nበTedyTech የሚሸጡ ሁሉም ስልኮች ከፋብሪካ የሚመጡ የቴክኒክ ጉድለቶችን፣ የሃርድዌር ብልሽቶችን እና የባትሪ ችግሮችን የሚሸፍን የ1 ዓመት ዋስትና አላቸው።\n\n• የሚካተቱት፦ የፋብሪካ ጉድለቶች፣ የሃርድዌር ብልሽቶች፣ የባትሪ መበላሸት።\n• የማይካተቱት፦ የተሰበረ ስክሪን፣ በውሃ የደረሰ ጉዳት፣ በአጠቃቀም ስህተት የሚመጡ ጉዳቶች።\n\nአገልግሎቱን ለማግኘት፣ ደረሰኝዎን እና ስልኩን አዲስ አበባ በሚገኘው ሱቃችን ይዘው ይምጡ።",
+      "📦 የ1 ዓመት ዋስትና — ምን ምን ያካትታል?\n\nበMicky Mobile የሚሸጡ ሁሉም ስልኮች ከፋብሪካ የሚመጡ የቴክኒክ ጉድለቶችን፣ የሃርድዌር ብልሽቶችን እና የባትሪ ችግሮችን የሚሸፍን የ1 ዓመት ዋስትና አላቸው።\n\n• የሚካተቱት፦ የፋብሪካ ጉድለቶች፣ የሃርድዌር ብልሽቶች፣ የባትሪ መበላሸት።\n• የማይካተቱት፦ የተሰበረ ስክሪን፣ በውሃ የደረሰ ጉዳት፣ በአጠቃቀም ስህተት የሚመጡ ጉዳቶች።\n\nአገልግሎቱን ለማግኘት፣ ደረሰኝዎን እና ስልኩን አዲስ አበባ በሚገኘው ሱቃችን ይዘው ይምጡ።",
   },
   {
     id: 'item-2',
@@ -56,17 +56,17 @@ const faqItems: FaqItem[] = [
     id: 'item-3',
     title: '🚚 Shipping & Delivery',
     content:
-      "We deliver within Addis Ababa.\n\n• Same-day pickup available at our store.\n• Home delivery within 24 hours (fee varies by location).\n• We partner with trusted local couriers.\n• Prefer in-person? Visit us at Bole — opposite the school, Alemnesch Plaza 014.",
+      "We deliver within Addis Ababa.\n\n• Same-day pickup available at our store.\n• Home delivery within 24 hours (fee varies by location).\n• We partner with trusted local couriers.\n• Prefer in-person? Visit us at Bole Alemnesh Plaza Ground Floor.",
     contentAm:
-      "አዲስ አበባ ውስጥ እናደርሳለን።\n\n• በዕለቱ ከሱቃችን መረከብ (Pickup) ይቻላል።\n• በ24 ሰዓት ውስጥ የቤት ለቤት አቅርቦት (የማድረሻ ክፍያ እንደ ቦታው ይለያያል)።\n• ከታማኝ የሀገር ውስጥ መላላኪያዎች ጋር እንሰራለን።\n• በአካል መገኘት ይመርጣሉ? ቦሌ — አለምነሽ ፕላዛ (Alemnesh Plaza) 014 በሚገኘው TEDMOBILE (ቴድ ሞባይል) ሱቃችን ይጎብኙን።",
+      "አዲስ አበባ ውስጥ እናደርሳለን።\n\n• በዕለቱ ከሱቃችን መረከብ (Pickup) ይቻላል።\n• በ24 ሰዓት ውስጥ የቤት ለቤት አቅርቦት (የማድረሻ ክፍያ እንደ ቦታው ይለያያል)።\n• ከታማኝ የሀገር ውስጥ መላላኪያዎች ጋር እንሰራለን።\n• በአካል መገኘት ይመርጣሉ? Bole Alemnesh Plaza Ground Floor በሚገኘው Micky Mobile ሱቃችን ይጎብኙን።",
   },
   {
     id: 'item-4',
     title: '🛡️ How We Verify Phones (Anti-Fraud)',
     content:
-      "Every phone goes through strict verification before sale:\n\n✔ IMEI checked — not blacklisted or reported stolen.\n✔ Authentic hardware — no clone or counterfeit parts.\n✔ iCloud / Google account unlocked — no activation lock.\n✔ Full diagnostic test — camera, battery, screen, speakers.\n\nCloned or locked phones are never sold at TedyTech.",
+      "Every phone goes through strict verification before sale:\n\n✔ IMEI checked — not blacklisted or reported stolen.\n✔ Authentic hardware — no clone or counterfeit parts.\n✔ iCloud / Google account unlocked — no activation lock.\n✔ Full diagnostic test — camera, battery, screen, speakers.\n\nCloned or locked phones are never sold at Micky Mobile.",
     contentAm:
-      "🛡️ ስልኮችን የምናረጋግጥበት መንገድ (ከማጭበርበር የጸዳ)\n\nእያንዳንዱ ስልክ ከመሸጡ በፊት ጥብቅ የማጣራት ሂደት ውስጥ ያልፋል፦\n\n✔ IMEI ተፈትሿል፦ በጥቁር መዝገብ ላይ ያልሰፈረ ወይም የተሰረቀ ተብሎ ሪፖርት ያልተደረገበት።\n✔ ኦሪጅናል ሃርድዌር፦ ምንም አይነት የተቀዳ (clone) ወይም አስመሳይ እቃ የሌለው።\n✔ iCloud / Google አካውንት የተከፈተ፦ ምንም አይነት የኤክቲቬሽን መቆለፊያ (activation lock) የሌለው።\n✔ ሙሉ የቴክኒክ ምርመራ፦ ካሜራ፣ ባትሪ፣ ስክሪን እና ስፒከር።\n\nየተቀዱ (Clone) ወይም የተቆለፉ ስልኮች በTedyTech በፍፁም አይሸጡም።",
+      "🛡️ ስልኮችን የምናረጋግጥበት መንገድ (ከማጭበርበር የጸዳ)\n\nእያንዳንዱ ስልክ ከመሸጡ በፊት ጥብቅ የማጣራት ሂደት ውስጥ ያልፋል፦\n\n✔ IMEI ተፈትሿል፦ በጥቁር መዝገብ ላይ ያልሰፈረ ወይም የተሰረቀ ተብሎ ሪፖርት ያልተደረገበት።\n✔ ኦሪጅናል ሃርድዌር፦ ምንም አይነት የተቀዳ (clone) ወይም አስመሳይ እቃ የሌለው።\n✔ iCloud / Google አካውንት የተከፈተ፦ ምንም አይነት የኤክቲቬሽን መቆለፊያ (activation lock) የሌለው።\n✔ ሙሉ የቴክኒክ ምርመራ፦ ካሜራ፣ ባትሪ፣ ስክሪን እና ስፒከር።\n\nየተቀዱ (Clone) ወይም የተቆለፉ ስልኮች በMicky Mobile በፍፁም አይሸጡም።",
   },
   {
     id: 'item-5',
@@ -194,7 +194,7 @@ export function AboutTab({ onNavigateToExchange }: AboutTabProps) {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="p-4 animate-slide-down">
-          <h1 className="text-xl font-bold text-foreground">About TedyTech</h1>
+          <h1 className="text-xl font-bold text-foreground">About Micky Mobile</h1>
         </div>
       </header>
 
@@ -206,7 +206,7 @@ export function AboutTab({ onNavigateToExchange }: AboutTabProps) {
             <img src={tedMobileLogo} alt="TED MOBILE" className="w-full h-full object-cover" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-foreground">TEDYTECH™</h2>
+            <h2 className="text-2xl font-bold text-foreground">Micky Mobile™</h2>
             <p className="text-muted-foreground">We sell, buy and exchange.</p>
           </div>
 
@@ -281,12 +281,9 @@ export function AboutTab({ onNavigateToExchange }: AboutTabProps) {
         >
           <h3 className="font-semibold text-foreground mb-3">አድራሻ</h3>
           <div className="space-y-1 text-sm text-muted-foreground">
-            <p className="flex items-start gap-2">
+                        <p className="flex items-start gap-2">
               <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0 animate-pulse-soft" />
-              <span>
-                አለምነሽ ፕላዛ 014<br />
-                (ቴድ ስፖርት)
-              </span>
+              <span>Bole Alemnesh Plaza Ground Floor</span>
             </p>
           </div>
         </div>

@@ -126,7 +126,7 @@ export function HomeTab({
       <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-foreground">TEDYTECH™</h1>
+            <h1 className="text-xl font-bold text-foreground">Micky Mobile™</h1>
             <p className="text-xs text-muted-foreground">
               We sell, buy and exchange.
             </p>
@@ -162,7 +162,7 @@ export function HomeTab({
         </div>
       </header>
 
-      <main className="p-4 space-y-5 pt-20">
+      <main className="p-4 space-y-5 pt-20 pb-40">
         <SearchBar
           onOpenFilters={() => setAllFiltersOpen(true)}
           onSelectPhone={(phone: Phone) => handlePhoneClick(phone)}
@@ -187,6 +187,8 @@ export function HomeTab({
             onProductClick={handlePhoneClick}
           />
         </div>
+        {/* Large spacer to ensure the last row of products clears the bottom navigation */}
+        <div className="h-40" />
       </main>
 
       <Suspense fallback={null}>

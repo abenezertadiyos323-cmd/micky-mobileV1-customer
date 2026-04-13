@@ -73,11 +73,9 @@ function normalizePhone(raw: RawProduct): Phone {
           ? raw.isPremium
           : false,
     is_accessory:
-      typeof raw.is_accessory === "boolean"
-        ? raw.is_accessory
-        : typeof raw.isAccessory === "boolean"
-          ? raw.isAccessory
-          : false,
+      raw.type === "accessory" ||
+      raw.is_accessory === true ||
+      raw.isAccessory === true,
     exchange_available:
       typeof raw.exchange_available === "boolean"
         ? raw.exchange_available
