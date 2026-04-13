@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { MapPin, Phone, Navigation, CheckCircle, Clock, DollarSign } from 'lucide-react';
-import tedMobileLogo from '@/assets/ted-mobile-logo-88.webp';
+import mickyMobileLogo from '@/assets/micky-mobile-logo-88.webp';
 import { storeConfig } from '@/config/storeConfig';
 import { useApp } from '@/contexts/AppContext';
 import { useCreatePhoneAction } from '@/hooks/usePhoneActions';
@@ -203,7 +203,7 @@ export function AboutTab({ onNavigateToExchange }: AboutTabProps) {
         {/* Brand Header */}
         <div className="text-center space-y-3 animate-fade-in">
           <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden flex items-center justify-center shadow-lg animate-bounce-in hover-glow">
-            <img src={tedMobileLogo} alt="TED MOBILE" className="w-full h-full object-cover" />
+            <img src={mickyMobileLogo} alt="Micky Mobile" className="w-full h-full object-cover" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-foreground">Micky Mobile™</h2>

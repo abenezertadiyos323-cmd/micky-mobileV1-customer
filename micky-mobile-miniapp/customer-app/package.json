@@ -1,5 +1,6 @@
 {
   "name": "mickymobile-customer-miniapp",
+  "description": "Micky Mobile customer mini app",
   "private": true,
   "version": "1.0.0",
   "type": "module",

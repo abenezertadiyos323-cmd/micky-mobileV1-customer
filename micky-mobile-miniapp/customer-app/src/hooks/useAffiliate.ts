@@ -7,16 +7,16 @@ import { api } from "@/convex_generated/api";
 import { useApp } from "@/contexts/AppContext";
 import { toast } from "sonner";
 
-// Debug: active when ?debug=1 or localStorage TEDY_DEBUG=1.
+// Debug: active when ?debug=1 or localStorage MICKY_MOBILE_DEBUG=1.
 const _IS_DEBUG: boolean = (() => {
   if (typeof window === "undefined") return false;
   try {
     if (new URLSearchParams(window.location.search).get("debug") === "1") return true;
-    if (localStorage.getItem("TEDY_DEBUG") === "1") return true;
+    if (localStorage.getItem("MICKY_MOBILE_DEBUG") === "1") return true;
   } catch { /* ignore */ }
   return false;
 })();
-const STATS_DEBUG_KEY = "TEDY_STATS_DEBUG_LAST";
+const STATS_DEBUG_KEY = "MICKY_MOBILE_STATS_DEBUG_LAST";
 // Developer Telegram ID — auto-toasts visible only to this account.
 const DEV_TG_ID = 8319120114;
 

@@ -72,7 +72,7 @@ const IS_DEBUG =
   (typeof window !== "undefined" &&
     (() => {
       try {
-        return localStorage.getItem("TEDY_DEBUG") === "1";
+        return localStorage.getItem("MICKY_MOBILE_DEBUG") === "1";
       } catch {
         return false;
       }
@@ -97,7 +97,7 @@ const TG_USER_STORAGE_KEY = "tg_user_id";
 // Stores the ?ref= referral code from the URL across the session until auth resolves.
 const REF_STORAGE_KEY = "mickymobile_ref";
 // localStorage key for referral-flow debug snapshot (always written, read by ReferralDebugPanel).
-const REF_DEBUG_KEY = "TEDY_REF_DEBUG_LAST";
+const REF_DEBUG_KEY = "MICKY_MOBILE_REF_DEBUG_LAST";
 // Developer Telegram ID — auto-toasts visible only to this account, no flag needed.
 const DEV_TG_ID = 8319120114;
 

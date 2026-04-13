@@ -8,13 +8,13 @@ const IS_DEBUG: boolean = (() => {
   if (typeof window === "undefined") return false;
   try {
     if (new URLSearchParams(window.location.search).get("debug") === "1") return true;
-    if (localStorage.getItem("TEDY_DEBUG") === "1") return true;
+    if (localStorage.getItem("MICKY_MOBILE_DEBUG") === "1") return true;
   } catch { /* ignore */ }
   return false;
 })();
 
-const REF_DEBUG_KEY = "TEDY_REF_DEBUG_LAST";
-const STATS_DEBUG_KEY = "TEDY_STATS_DEBUG_LAST";
+const REF_DEBUG_KEY = "MICKY_MOBILE_REF_DEBUG_LAST";
+const STATS_DEBUG_KEY = "MICKY_MOBILE_STATS_DEBUG_LAST";
 const BUILD_SHA = "a2bb76c7"; // keep in sync with EarnTab build label
 
 // ---------------------------------------------------------------------------
@@ -73,7 +73,7 @@ export function ReferralDebugPanel() {
     refresh();
   }, [refresh]);
 
-  // Hidden for all normal users — IS_DEBUG is false unless ?debug=1 or TEDY_DEBUG=1.
+  // Hidden for all normal users — IS_DEBUG is false unless ?debug=1 or MICKY_MOBILE_DEBUG=1.
   if (!IS_DEBUG) return null;
 
   const handleCopy = () => {
@@ -149,7 +149,7 @@ export function ReferralDebugPanel() {
       </div>
 
       <div style={{ color: "#334155", fontSize: 10, marginTop: 8 }}>
-        Hidden unless ?debug=1 or localStorage TEDY_DEBUG=1
+        Hidden unless ?debug=1 or localStorage MICKY_MOBILE_DEBUG=1
       </div>
     </div>
   );

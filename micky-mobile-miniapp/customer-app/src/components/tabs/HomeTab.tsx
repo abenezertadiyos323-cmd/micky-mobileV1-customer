@@ -13,7 +13,7 @@ import {
   useBrowsePhones,
 } from "@/hooks/usePhones";
 import type { Phone } from "@/types/phone";
-import tedMobileLogo from "@/assets/ted-mobile-logo-88.webp";
+import mickyMobileLogo from "@/assets/micky-mobile-logo-88.webp";
 import { mapToProductVM, type ProductVM } from "@/lib/mapProduct";
 import type { LeadSourceTab } from "@/hooks/usePhoneActions";
 
@@ -151,8 +151,8 @@ export function HomeTab({
               className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center bg-transparent transition-transform duration-200 hover:scale-110 active:scale-95"
             >
               <img
-                src={tedMobileLogo}
-                alt="TED MOBILE"
+                src={mickyMobileLogo}
+                alt="Micky Mobile"
                 width={44}
                 height={44}
                 className="w-full h-full object-contain bg-transparent"

@@ -5,7 +5,7 @@
 import { ConvexClient } from "convex/browser";
 
 // Read from admin app's generated API
-import { api } from "../tedytalk-manager/convex/_generated/api.js";
+import { api } from "../mickymobile-manager/convex/_generated/api.js";
 
 const DEPLOYMENT_URL = "https://clever-partridge-181.convex.cloud";
 

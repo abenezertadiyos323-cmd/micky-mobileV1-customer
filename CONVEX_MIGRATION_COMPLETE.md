@@ -94,7 +94,7 @@ VITE_CONVEX_URL=https://your-deployment.convex.cloud
 #### Step 1: Install Convex dependencies
 
 ```bash
-cd d:\Ab\TedTech\tedytalk-manager
+cd d:\Ab\MickyMobile\mickymobile-manager
 npm install convex
 ```
 
@@ -114,7 +114,7 @@ Expected output: `✔ Convex functions ready!`
 #### Step 4: Start admin app (in separate terminal)
 
 ```bash
-cd d:\Ab\TedTech\tedytalk-manager
+cd d:\Ab\MickyMobile\mickymobile-manager
 npm run dev
 ```
 
