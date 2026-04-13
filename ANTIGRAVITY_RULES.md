@@ -1,6 +1,6 @@
 # Antigravity Execution Rules — MICKY MOBILE Project
 
-Root folder: `tedytech/`
+Root folder: `micky-mobile/`
 
 Subfolders:
 - `admin/` → Admin mini-app (Vite + React)

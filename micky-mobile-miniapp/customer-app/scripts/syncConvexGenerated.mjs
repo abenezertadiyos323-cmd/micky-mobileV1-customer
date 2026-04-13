@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Primary: Admin (MASTER) Convex project — same deployment used by Admin-Ted.
-// Relative path: scripts/ → customer-app/ → tedytech-Customer-miniapp/ →
+// Relative path: scripts/ → customer-app/ → micky-mobile-miniapp/ →
 //   Micky Mobile/ → Ab/ → D:\ → Abenier/Micky Mobile Admin/Admin-Ted/convex/_generated
 const adminTedSourceDir = path.resolve(
   __dirname,

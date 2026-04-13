@@ -61,8 +61,8 @@ Both apps must point to the same MASTER deployment. Never split them:
 
 | App | File | Required value |
 |-----|------|----------------|
-| Customer | `tedytech-Customer-miniapp/customer-app/.env.production` | `VITE_CONVEX_URL=https://fastidious-schnauzer-265.convex.cloud` |
-| Customer (local) | `tedytech-Customer-miniapp/customer-app/.env.local` | `VITE_CONVEX_URL=https://fastidious-schnauzer-265.convex.cloud` |
+| Customer | `micky-mobile-miniapp/customer-app/.env.production` | `VITE_CONVEX_URL=https://fastidious-schnauzer-265.convex.cloud` |
+| Customer (local) | `micky-mobile-miniapp/customer-app/.env.local` | `VITE_CONVEX_URL=https://fastidious-schnauzer-265.convex.cloud` |
 | Admin | `Admin-Ted/.env.production` / Vercel env var | `VITE_CONVEX_URL=https://fastidious-schnauzer-265.convex.cloud` |
 
 ---
