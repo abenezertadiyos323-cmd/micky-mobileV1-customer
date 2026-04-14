@@ -27,57 +27,47 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
   const createPhoneAction = useCreatePhoneAction(sessionId);
   const { openStartLink } = useTelegramStartLinkBuilder();
 
-  const rawPhone: Phone | null =
+  // Extend Phone to accept any new dynamic properties
+  const rawPhone = (
     phoneDetail?.phone ??
-    (initialProduct ? productVMToPhone(initialProduct) : null);
+    (initialProduct ? productVMToPhone(initialProduct) : null)
+  ) as Phone & Record<string, any> | null;
+  
   const product: ProductVM | null = rawPhone
     ? mapToProductVM(rawPhone as unknown as Record<string, unknown>)
     : initialProduct ?? null;
+    
   const images = phoneDetail?.images || [];
   const variants = phoneDetail?.variants || [];
 
-  // Get unique colors and storage options from variants
-  const uniqueColors = useMemo(() => {
-    const colors = [...new Set(variants.map(v => v.color))];
-    return colors.length > 0 ? colors : (rawPhone?.color ? [rawPhone.color] : ['Default']);
-  }, [variants, rawPhone?.color]);
-
   const uniqueStorages = useMemo(() => {
-    const storages = [...new Set(variants.map(v => v.storage_gb))].sort((a, b) => a - b);
-    return storages.length > 0 ? storages : (rawPhone?.storage_gb ? [rawPhone.storage_gb] : []);
+    const storages = [...new Set(variants.map((v: any) => v.storage))].filter(Boolean) as string[];
+    return storages.length > 0 ? storages : (rawPhone?.storage_gb ? [`${rawPhone.storage_gb}GB`] : []);
   }, [variants, rawPhone?.storage_gb]);
 
-  const [selectedColor, setSelectedColor] = useState(uniqueColors[0] || 'Default');
-  const [selectedStorage, setSelectedStorage] = useState<number | null>(null);
+  const [selectedStorage, setSelectedStorage] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
   const [isOpeningTelegram, setIsOpeningTelegram] = useState(false);
   const [imageDirection, setImageDirection] = useState<'left' | 'right'>('right');
 
-  // Set default storage when variants load
   useEffect(() => {
     if (uniqueStorages.length > 0 && selectedStorage === null) {
-      const defaultVariant = variants.find(v => v.is_default);
-      setSelectedStorage(defaultVariant?.storage_gb || uniqueStorages[0]);
+      setSelectedStorage(uniqueStorages[0]);
     }
-  }, [uniqueStorages, variants, selectedStorage]);
+  }, [uniqueStorages, selectedStorage]);
 
   const saved = product ? isSaved(product.id) : false;
 
-  // Find current variant based on selection
   const currentVariant = useMemo(() => {
-    return variants.find(v =>
-      v.color === selectedColor && v.storage_gb === selectedStorage
-    ) || variants.find(v => v.storage_gb === selectedStorage) || variants[0];
-  }, [variants, selectedColor, selectedStorage]);
+    return variants.find((v: any) => v.storage === selectedStorage) || variants[0];
+  }, [variants, selectedStorage]);
 
-  // Calculate current price
   const currentPrice = useMemo(() => {
-    if (currentVariant?.price_birr) return currentVariant.price_birr;
+    if (currentVariant?.price) return currentVariant.price;
     return product?.priceBirr || 0;
   }, [currentVariant, product?.priceBirr]);
 
-  // Image gallery - use detail images or fallback to main image
   const imageUrls = useMemo(() => {
     if (images.length > 0) {
       return images.map(img => img.image_url);
@@ -97,7 +87,6 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
     setCurrentImageIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
   };
 
-  // Touch swipe support for image gallery
   const touchStartX = useRef<number | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -108,7 +97,7 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
     if (touchStartX.current === null) return;
     const delta = e.changedTouches[0].clientX - touchStartX.current;
     touchStartX.current = null;
-    if (Math.abs(delta) < 40) return; // ignore tiny movements
+    if (Math.abs(delta) < 40) return; 
     if (delta > 0) prevImage();
     else nextImage();
   };
@@ -126,38 +115,11 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
     onExchange();
   };
 
-  // Generate dynamic item ID for Telegram deep link
-  const generateItemId = (item: ProductVM, storage: number | null): string => {
+  const generateItemId = (item: ProductVM, storage: string | null): string => {
     const brand = item.brand.toLowerCase().replace(/\s+/g, '_');
     const model = item.model.toLowerCase().replace(/\s+/g, '_');
-    const storageStr = storage ? `_${storage}gb` : '';
+    const storageStr = storage ? `_${storage.toLowerCase()}` : '';
     return `${brand}_${model}${storageStr}`;
-  };
-
-  /**
-   * P0: Log the lead action FIRST, then redirect to Telegram.
-   * The Convex document ID is used as the start param so the bot
-   * can look up the lead immediately on message receipt.
-   */
-  const handleStartInquiry = async () => {
-    if (!product) return;
-
-    try {
-      const leadId = await createPhoneAction.mutate({
-        actionType: 'inquiry',
-        sourceTab,
-        sourceProductId: product.id,
-        timestamp: Date.now(),
-      });
-
-      const deepLink = `https://t.me/${storeConfig.botUsername}?start=${storeConfig.telegramStartPrefix}${leadId}`;
-      window.open(deepLink, '_blank');
-    } catch {
-      // Error already toasted inside useCreatePhoneAction — nothing to do here.
-      // Fallback: open bot without a start param so the user isn't blocked.
-      const itemId = generateItemId(product, selectedStorage);
-      window.open(`https://t.me/${storeConfig.botUsername}?start=item_${itemId}`, '_blank');
-    }
   };
 
   const handleContextualStartInquiry = async () => {
@@ -166,7 +128,7 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
     const productLabel = [
       product.brand,
       product.model,
-      selectedStorage ? `${selectedStorage}GB` : null,
+      selectedStorage,
     ]
       .filter(Boolean)
       .join(' ');
@@ -182,7 +144,7 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
         showErrorToast: false,
       });
     } catch {
-      // Analytics logging should not block the customer from opening Telegram.
+      // Analytics offline
     }
 
     await openStartLink({
@@ -213,7 +175,6 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
 
   const displayName = product.title;
   const highlights = rawPhone?.key_highlights || [];
-  const specs = rawPhone?.key_specs as Record<string, string> | null;
 
   return (
     <div className="min-h-screen bg-background pb-64 animate-slide-in-right">
@@ -257,7 +218,6 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
           onError={(e) => { e.currentTarget.src = "/placeholder.svg"; }}
         />
 
-        {/* Navigation Arrows */}
         {imageUrls.length > 1 && (
           <>
             <button
@@ -275,7 +235,6 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
           </>
         )}
 
-        {/* Image Indicators */}
         {imageUrls.length > 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
             {imageUrls.map((_, index) => (
@@ -299,7 +258,8 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
 
       {/* Content */}
       <div className="p-4 space-y-5">
-        {/* 1. Phone Name + Price */}
+        
+        {/* 1. Phone Name + Price (Auto-Updates with Variant!) */}
         <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <h2 className="text-xl font-bold text-foreground mb-1">{displayName}</h2>
           <p className="text-2xl font-bold text-primary">{formatPrice(currentPrice)}</p>
@@ -309,13 +269,36 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
             </p>
           )}
         </div>
+        
+        {/* 2. Dynamic Storage Variant Picker */}
+        {uniqueStorages.length > 1 && (
+          <div className="animate-fade-in" style={{ animationDelay: '0.15s' }}>
+             <h3 className="text-sm font-semibold mb-2">Select Storage Capacity</h3>
+             <div className="flex flex-wrap gap-2">
+               {uniqueStorages.map(storage => (
+                 <button
+                   key={storage}
+                   onClick={() => setSelectedStorage(storage)}
+                   className={cn(
+                     "px-4 py-2 rounded-xl text-sm font-semibold transition-all border",
+                     selectedStorage === storage 
+                       ? "bg-primary text-primary-foreground border-primary" 
+                       : "bg-surface-2 border-border text-foreground hover:bg-surface-3"
+                   )}
+                 >
+                   {storage}
+                 </button>
+               ))}
+             </div>
+          </div>
+        )}
 
-        {/* 3. Quick Info Badges — only render when at least one badge has data */}
-        {(rawPhone?.storage_gb || product.condition) && (
+        {/* 3. Quick Info Badges */}
+        {(selectedStorage || product.condition) && (
           <div className="flex flex-wrap gap-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            {rawPhone?.storage_gb && (
+            {selectedStorage && (
               <span className="inline-block bg-primary/15 text-primary px-3 py-1.5 rounded-lg text-sm font-medium">
-                {rawPhone.storage_gb}GB Storage
+                {selectedStorage} Storage
               </span>
             )}
             {product.condition && (
@@ -329,7 +312,7 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
           </div>
         )}
 
-        {/* 4. Exchange Availability — only shown when exchange is available */}
+        {/* 4. Exchange Availability */}
         {rawPhone?.exchange_available === true && (
           <p className="text-sm text-success font-medium animate-fade-in" style={{ animationDelay: '0.25s' }}>
             Exchange available
@@ -339,11 +322,18 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
         {/* 5. Specifications */}
         {rawPhone && (
           (() => {
-            const storageDisplay = rawPhone?.storage_gb ? `${rawPhone.storage_gb}GB` : undefined;
+            const isIphone = rawPhone.brand?.toLowerCase() === 'apple' || rawPhone.brand?.toLowerCase() === 'iphone';
+            const isSamsung = rawPhone.brand?.toLowerCase() === 'samsung';
+            const currentRam = currentVariant?.ram || rawPhone.ram;
+            
             const specsRows = [
-              { label: 'Storage', value: storageDisplay },
-              { label: 'RAM', value: rawPhone?.ram },
-            ].filter(s => s.value);
+              { label: 'Storage', value: selectedStorage || (rawPhone.storage_gb ? `${rawPhone.storage_gb}GB` : undefined) },
+              isSamsung ? { label: 'RAM', value: currentRam } : null,
+              isIphone ? { label: 'Battery Health', value: rawPhone.batteryHealth } : null,
+              isIphone ? { label: 'Model Origin', value: rawPhone.modelOrigin } : null,
+              isSamsung ? { label: 'Network', value: rawPhone.network } : null,
+              { label: 'SIM Type', value: rawPhone.simType },
+            ].filter((s): s is {label: string, value: string} => Boolean(s && s.value));
 
             return specsRows.length > 0 && (
               <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
@@ -381,15 +371,12 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
           </div>
         )}
 
-
-
         {/* Description */}
         {rawPhone?.description && (() => {
           const lines = rawPhone.description
             .split('\n')
             .map(l => l.trim())
             .filter(Boolean);
-          // Detect if the description is a dash/bullet list (admin typed "- X" style)
           const isList = lines.length > 1 && lines.every(l => /^[-•*]/.test(l));
           const cleanLines = isList
             ? lines.map(l => l.replace(/^[-•*]\s*/, ''))
@@ -439,12 +426,6 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
             <RefreshCw className="w-4 h-4" />
             <span>Exchange</span>
           </button>
-        )}
-
-        {rawPhone?.exchange_available && (
-          <p className="text-center text-[10px] text-muted-foreground">
-            Exchange available. Final offer confirmed after inspection.
-          </p>
         )}
       </div>
     </div>

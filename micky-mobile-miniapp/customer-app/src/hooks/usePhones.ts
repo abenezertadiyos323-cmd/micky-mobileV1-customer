@@ -144,6 +144,12 @@ function normalizePhone(raw: RawProduct): Phone {
       typeof raw.features === "string" && raw.features.trim()
         ? raw.features.trim()
         : undefined,
+    batteryHealth: typeof raw.batteryHealth === "string" ? raw.batteryHealth : undefined,
+    modelOrigin: typeof raw.modelOrigin === "string" ? raw.modelOrigin : undefined,
+    simType: typeof raw.simType === "string" ? raw.simType : undefined,
+    network: typeof raw.network === "string" ? raw.network : undefined,
+    // Variants array
+    variants: Array.isArray(raw.variants) ? raw.variants : [],
     // Images: sanitize, trim, drop empty, cap to 6
     images: Array.isArray(raw.images)
       ? (raw.images as unknown[])
@@ -333,7 +339,7 @@ export function usePhoneDetail(phoneId: string | null) {
         : [];
 
   const data = (found
-    ? { phone: found, images, variants: [] }
+    ? { phone: found, images, variants: found.variants }
     : null) as PhoneDetail | null;
 
   return { data, isLoading };
