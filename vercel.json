@@ -1,4 +1,6 @@
 {
+  "buildCommand": "npm --workspace=mickymobile-customer-miniapp run build",
+  "installCommand": "npm install",
   "outputDirectory": "micky-mobile-miniapp/customer-app/dist",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
