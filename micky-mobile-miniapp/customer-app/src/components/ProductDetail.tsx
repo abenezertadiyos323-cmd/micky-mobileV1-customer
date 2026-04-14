@@ -343,13 +343,6 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
             const specsRows = [
               { label: 'Storage', value: storageDisplay },
               { label: 'RAM', value: rawPhone?.ram },
-              { label: 'Color', value: rawPhone?.color },
-              { label: 'Screen Size', value: rawPhone?.screenSize },
-              { label: 'Battery', value: rawPhone?.battery },
-              { label: 'Main Camera', value: rawPhone?.mainCamera },
-              { label: 'Selfie Camera', value: rawPhone?.selfieCamera },
-              { label: 'SIM Type', value: rawPhone?.simType },
-              { label: 'Operating System', value: rawPhone?.operatingSystem },
             ].filter(s => s.value);
 
             return specsRows.length > 0 && (
@@ -367,32 +360,6 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
             );
           })()
         )}
-
-        {/* 6. Features */}
-        {rawPhone?.features && (() => {
-          const featureLines = rawPhone.features
-            .split("\n")
-            .map((l) => l.trim())
-            .filter(Boolean);
-          if (featureLines.length === 0) return null;
-          return (
-            <div className="animate-fade-in" style={{ animationDelay: '0.45s' }}>
-              <h3 className="font-semibold text-foreground mb-2">Features</h3>
-              {featureLines.length > 1 ? (
-                <ul className="space-y-1.5 list-none">
-                  {featureLines.map((line, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <span className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
-                      <span>{line}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground leading-relaxed">{featureLines[0]}</p>
-              )}
-            </div>
-          );
-        })()}
 
         {/* Key Highlights */}
         {highlights.length > 0 && (
@@ -414,26 +381,7 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
           </div>
         )}
 
-        {/* Key Specs */}
-        {specs && Object.keys(specs).length > 0 && (
-          <div className="animate-fade-in" style={{ animationDelay: '0.55s' }}>
-            <h3 className="font-semibold text-foreground mb-3">Key Specs</h3>
-            <ul className="space-y-2">
-              {Object.entries(specs).map(([key, value], index) => (
-                <li
-                  key={key}
-                  className="flex items-start gap-2 opacity-0 animate-fade-in"
-                  style={{ animationDelay: `${0.6 + index * 0.05}s`, animationFillMode: 'forwards' }}
-                >
-                  <span className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
-                  <span className="text-sm text-muted-foreground">
-                    <span className="font-medium text-foreground">{key}:</span> {value}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+
 
         {/* Description */}
         {rawPhone?.description && (() => {

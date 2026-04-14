@@ -1,6 +1,6 @@
 {
   "outputDirectory": "micky-mobile-miniapp/customer-app/dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
