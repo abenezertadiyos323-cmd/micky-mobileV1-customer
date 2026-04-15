@@ -54,39 +54,58 @@ function splitNameIntoBrandModel(name: string): { brand: string; model: string }
 }
 
 function parseStorageVariants(raw: Record<string, unknown>): string | undefined {
+  const parseCapacity = (value: string): number => {
+    const normalized = value.trim().toUpperCase();
+    if (!normalized) return 0;
+    if (normalized.includes("TB")) {
+      const tbValue = Number.parseFloat(normalized.replace(/[^\d.]/g, ""));
+      return Number.isFinite(tbValue) ? tbValue * 1024 : 0;
+    }
+    const gbValue = Number.parseFloat(normalized.replace(/[^\d.]/g, ""));
+    return Number.isFinite(gbValue) ? gbValue : 0;
+  };
+
+  const formatCapacity = (value: string): string => {
+    const normalized = value.trim().toUpperCase();
+    if (!normalized) return "";
+    if (normalized.includes("TB")) return normalized.replace(/\s+/g, "");
+    const numeric = normalized.replace(/[^\d.]/g, "");
+    return numeric ? `${numeric}GB` : normalized;
+  };
+
   let storages: string[] = [];
-  
+
   // 1. Array of variants directly
   if (Array.isArray(raw.variants) && raw.variants.length > 0) {
-    storages = raw.variants.map((v: any) => {
-      const s = String(v?.storage || "");
-      return s.replace(/gb/i, "").trim();
-    }).filter(Boolean);
+    storages = raw.variants
+      .map((v: any) => formatCapacity(String(v?.storage || "")))
+      .filter(Boolean);
   }
-  
+
   // 2. Fallback to storage_gb string parsing
   if (storages.length === 0 && raw.storage_gb) {
     const s = String(raw.storage_gb).toUpperCase().replace(/GB/g, "").trim();
-    if (s === "128256") storages = ["128", "256"];
-    else if (s === "256512") storages = ["256", "512"];
-    else if (s === "5121TB") storages = ["512", "1TB"];
-    else if (s === "64128") storages = ["64", "128"];
-    else if (s === "64128256") storages = ["64", "128", "256"];
-    else if (s === "128256512") storages = ["128", "256", "512"];
+    if (s === "128256") storages = ["128GB", "256GB"];
+    else if (s === "256512") storages = ["256GB", "512GB"];
+    else if (s === "5121TB") storages = ["512GB", "1TB"];
+    else if (s === "64128") storages = ["64GB", "128GB"];
+    else if (s === "64128256") storages = ["64GB", "128GB", "256GB"];
+    else if (s === "128256512") storages = ["128GB", "256GB", "512GB"];
     else if (/[,\/& ]/.test(s)) {
-      storages = s.split(/[,\/& ]+/).filter(Boolean);
+      storages = s.split(/[,\/& ]+/).filter(Boolean).map(formatCapacity);
     } else {
-      storages = [s];
+      storages = [formatCapacity(s)];
     }
   }
-  
+
   storages = [...new Set(storages)].filter(Boolean);
   if (storages.length === 0) return undefined;
-  if (storages.length === 1) return `${storages[0]}GB`;
-  if (storages.length === 2) return `${storages[0]} & ${storages[1]}GB`;
-  
-  const last = storages.pop();
-  return `${storages.join(", ")} & ${last}GB`;
+
+  const sorted = [...storages].sort((a, b) => parseCapacity(a) - parseCapacity(b));
+  const lowest = sorted[0];
+  if (!lowest) return undefined;
+  if (sorted.length === 1) return lowest;
+  return `${lowest} +`;
 }
 
 export function mapToProductVM(raw: Record<string, unknown>): ProductVM {
