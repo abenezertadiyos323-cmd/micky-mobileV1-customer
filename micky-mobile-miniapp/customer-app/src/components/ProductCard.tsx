@@ -67,9 +67,9 @@ export function ProductCard({ product, onClick, index = 0 }: ProductCardProps) {
         <h3 className="font-medium text-foreground text-xs leading-tight line-clamp-2">
           {product.title}
         </h3>
-        {product.storageGb && (
+        {(product.storageLabel || product.storageGb) && (
           <span className="inline-block text-xs bg-muted/60 text-muted-foreground px-2 py-0.5 rounded-md font-medium w-fit">
-            {product.storageGb}GB
+            {product.storageLabel || `${product.storageGb}GB`}
           </span>
         )}
         <p className="text-xs text-muted-foreground">{product.condition}</p>

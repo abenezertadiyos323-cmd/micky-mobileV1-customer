@@ -12,6 +12,7 @@ export interface ProductVM {
   brand: string;
   model: string;
   storageGb?: number | null;
+  storageLabel?: string;
   ram?: string;
   color?: string;
   screenSize?: string;
@@ -50,6 +51,42 @@ function splitNameIntoBrandModel(name: string): { brand: string; model: string }
     brand: parts[0],
     model: parts.slice(1).join(" "),
   };
+}
+
+function parseStorageVariants(raw: Record<string, unknown>): string | undefined {
+  let storages: string[] = [];
+  
+  // 1. Array of variants directly
+  if (Array.isArray(raw.variants) && raw.variants.length > 0) {
+    storages = raw.variants.map((v: any) => {
+      const s = String(v?.storage || "");
+      return s.replace(/gb/i, "").trim();
+    }).filter(Boolean);
+  }
+  
+  // 2. Fallback to storage_gb string parsing
+  if (storages.length === 0 && raw.storage_gb) {
+    const s = String(raw.storage_gb).toUpperCase().replace(/GB/g, "").trim();
+    if (s === "128256") storages = ["128", "256"];
+    else if (s === "256512") storages = ["256", "512"];
+    else if (s === "5121TB") storages = ["512", "1TB"];
+    else if (s === "64128") storages = ["64", "128"];
+    else if (s === "64128256") storages = ["64", "128", "256"];
+    else if (s === "128256512") storages = ["128", "256", "512"];
+    else if (/[,\/& ]/.test(s)) {
+      storages = s.split(/[,\/& ]+/).filter(Boolean);
+    } else {
+      storages = [s];
+    }
+  }
+  
+  storages = [...new Set(storages)].filter(Boolean);
+  if (storages.length === 0) return undefined;
+  if (storages.length === 1) return `${storages[0]}GB`;
+  if (storages.length === 2) return `${storages[0]} & ${storages[1]}GB`;
+  
+  const last = storages.pop();
+  return `${storages.join(", ")} & ${last}GB`;
 }
 
 export function mapToProductVM(raw: Record<string, unknown>): ProductVM {
@@ -99,6 +136,7 @@ export function mapToProductVM(raw: Record<string, unknown>): ProductVM {
         : true;
 
   const storageGb = normalizeNumber(raw.storage_gb, 0) || undefined;
+  const storageLabel = parseStorageVariants(raw);
 
   const ram =
     typeof raw.ram === "string" && raw.ram.trim() ? raw.ram.trim() : undefined;
@@ -145,7 +183,8 @@ export function mapToProductVM(raw: Record<string, unknown>): ProductVM {
     condition,
     brand,
     model,
-    storageGb: storageGb,
+    storageGb,
+    storageLabel,
     ram,
     color,
     screenSize,
