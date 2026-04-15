@@ -162,7 +162,7 @@ export function HomeTab({
         </div>
       </header>
 
-      <main className="p-4 space-y-5 pt-20">
+      <main className="p-4 space-y-5 pt-20 pb-6">
         <SearchBar
           onOpenFilters={() => setAllFiltersOpen(true)}
           onSelectPhone={(phone: Phone) => handlePhoneClick(phone)}

@@ -187,7 +187,7 @@ function EarnTabInner() {
         </div>
       </header>
 
-      <div className="p-4 space-y-4 pt-20">
+      <div className="p-4 space-y-4 pt-20 pb-6">
         {/* Hero Text */}
         <div className="text-center py-2">
           <h2 className="text-lg font-semibold text-foreground mb-2">

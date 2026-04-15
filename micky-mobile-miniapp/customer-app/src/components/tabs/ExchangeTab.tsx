@@ -133,7 +133,7 @@ export function ExchangeTab() {
   // Form Step
   if (step === "form") {
     return (
-      <div className="flex flex-col gap-4 px-4">
+      <div className="flex flex-col gap-4 px-4 pb-6">
         <div className="pt-4">
           <h1 className="text-2xl font-bold text-foreground">Exchange</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -295,7 +295,7 @@ export function ExchangeTab() {
   // Review Step
   if (step === "review") {
     return (
-      <div className="flex flex-col gap-4 px-4">
+      <div className="flex flex-col gap-4 px-4 pb-6">
         <div className="pt-4">
           <h1 className="text-2xl font-bold text-foreground">Review Request</h1>
           <p className="text-sm text-muted-foreground mt-1">
