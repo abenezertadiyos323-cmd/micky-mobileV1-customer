@@ -181,7 +181,7 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
   const highlights = rawPhone?.key_highlights || [];
 
   return (
-    <div className="min-h-screen bg-background pb-64 animate-slide-in-right">
+    <div className="min-h-screen bg-background pb-48 animate-slide-in-right">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="flex items-center justify-between p-4">

@@ -66,7 +66,7 @@ const Index = () => {
         {/* Tab Content with transitions */}
         <div
           className={cn(
-            "transition-all duration-300 ease-out pb-20",
+            "transition-all duration-300 ease-out pb-16",
             isTransitioning ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
           )}
         >
