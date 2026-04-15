@@ -176,7 +176,7 @@ function EarnTabInner() {
   // Buttons are disabled when referralCode is null.
   // Auto-create fires in the background once auth resolves.
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="flex items-center justify-between p-4">

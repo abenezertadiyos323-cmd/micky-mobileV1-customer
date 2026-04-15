@@ -162,7 +162,7 @@ export function HomeTab({
         </div>
       </header>
 
-      <main className="p-4 space-y-5 pt-20 pb-40">
+      <main className="p-4 space-y-5 pt-20">
         <SearchBar
           onOpenFilters={() => setAllFiltersOpen(true)}
           onSelectPhone={(phone: Phone) => handlePhoneClick(phone)}
@@ -187,8 +187,6 @@ export function HomeTab({
             onProductClick={handlePhoneClick}
           />
         </div>
-        {/* Large spacer to ensure the last row of products clears the bottom navigation */}
-        <div className="h-40" />
       </main>
 
       <Suspense fallback={null}>

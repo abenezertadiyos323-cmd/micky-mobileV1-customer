@@ -52,6 +52,10 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
   const [imageDirection, setImageDirection] = useState<'left' | 'right'>('right');
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     if (uniqueStorages.length > 0 && selectedStorage === null) {
       setSelectedStorage(uniqueStorages[0]);
     }
@@ -293,24 +297,9 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
           </div>
         )}
 
-        {/* 3. Quick Info Badges */}
-        {(selectedStorage || product.condition) && (
-          <div className="flex flex-wrap gap-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            {selectedStorage && (
-              <span className="inline-block bg-primary/15 text-primary px-3 py-1.5 rounded-lg text-sm font-medium">
-                {selectedStorage} Storage
-              </span>
-            )}
-            {product.condition && (
-              <span className={cn(
-                "inline-block px-3 py-1.5 rounded-lg text-sm font-medium",
-                product.condition.toLowerCase() === 'new' ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"
-              )}>
-                {getConditionLabel(product.condition)}
-              </span>
-            )}
-          </div>
-        )}
+        {/* 3. Quick Info Badges Removed as requested */}
+
+
 
         {/* 4. Exchange Availability */}
         {rawPhone?.exchange_available === true && (
@@ -327,6 +316,7 @@ export function ProductDetail({ phoneId, product: initialProduct, onBack, onExch
             const currentRam = currentVariant?.ram || rawPhone.ram;
             
             const specsRows = [
+              { label: 'Condition', value: product.condition ? getConditionLabel(product.condition) : undefined },
               { label: 'Storage', value: selectedStorage || (rawPhone.storage_gb ? `${rawPhone.storage_gb}GB` : undefined) },
               isSamsung ? { label: 'RAM', value: currentRam } : null,
               isIphone ? { label: 'Battery Health', value: rawPhone.batteryHealth } : null,

@@ -61,6 +61,7 @@ export function mapToProductVM(raw: Record<string, unknown>): ProductVM {
 
   const rawBrand = normalizeString(raw.brand);
   const rawModel =
+    normalizeString(raw.phoneType) ||
     normalizeString(raw.model) ||
     normalizeString(raw.name) ||
     normalizeString(raw.title);
@@ -68,7 +69,7 @@ export function mapToProductVM(raw: Record<string, unknown>): ProductVM {
   const inferred = splitNameIntoBrandModel(rawModel);
   const brand = rawBrand || inferred.brand || "Phone";
   const model = rawBrand && rawModel ? rawModel : inferred.model || rawModel || "Item";
-  const title = normalizeString(`${brand} ${model}`.trim(), "Phone Item");
+  const title = normalizeString(rawModel || "Phone Item");
 
   const images = Array.isArray(raw.images)
     ? raw.images.filter((img): img is string => typeof img === "string" && !!img)

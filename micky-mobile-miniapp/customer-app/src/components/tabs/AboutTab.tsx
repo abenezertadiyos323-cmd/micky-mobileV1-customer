@@ -190,7 +190,7 @@ export function AboutTab({ onNavigateToExchange }: AboutTabProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="p-4 animate-slide-down">
