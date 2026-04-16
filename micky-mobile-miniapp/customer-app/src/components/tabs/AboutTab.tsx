@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { MapPin, Phone, Navigation, CheckCircle, Clock, DollarSign } from 'lucide-react';
-import mickyMobileLogo from '@/assets/micky-mobile-logo-88.webp';
+import mickyMobileLogo from '@/assets/micky-mobile-brand-logo.png';
 import { storeConfig } from '@/config/storeConfig';
 import { useApp } from '@/contexts/AppContext';
 import { useCreatePhoneAction } from '@/hooks/usePhoneActions';

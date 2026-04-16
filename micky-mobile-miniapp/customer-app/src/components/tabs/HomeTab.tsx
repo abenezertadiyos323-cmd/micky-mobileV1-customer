@@ -13,7 +13,7 @@ import {
   useBrowsePhones,
 } from "@/hooks/usePhones";
 import type { Phone } from "@/types/phone";
-import mickyMobileLogo from "@/assets/micky-mobile-logo-88.webp";
+import mickyMobileLogo from "@/assets/micky-mobile-brand-logo.png";
 import { mapToProductVM, type ProductVM } from "@/lib/mapProduct";
 import type { LeadSourceTab } from "@/hooks/usePhoneActions";
 
@@ -148,14 +148,14 @@ export function HomeTab({
             {/* Logo Button */}
             <button
               onClick={onNavigateToAbout}
-              className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center bg-transparent transition-transform duration-200 hover:scale-110 active:scale-95"
+              className="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center bg-white transition-transform duration-200 hover:scale-110 active:scale-95 shadow-sm"
             >
               <img
                 src={mickyMobileLogo}
                 alt="Micky Mobile"
-                width={44}
-                height={44}
-                className="w-full h-full object-contain bg-transparent"
+                width={48}
+                height={48}
+                className="w-full h-full object-contain"
               />
             </button>
           </div>
